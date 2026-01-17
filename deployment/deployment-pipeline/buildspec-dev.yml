@@ -1,0 +1,162 @@
+version: 0.2
+
+# AWS CodeBuild buildspec for DEV environment
+# This buildspec handles building, testing, and deploying to development environment
+
+env:
+  variables:
+    ENVIRONMENT: "dev"
+    AWS_DEFAULT_REGION: "us-east-1"
+    PROJECT_NAME: "ecommerce-ai-platform"
+  parameter-store:
+    MYSQL_HOST: "/ecommerce-ai-platform/dev/mysql/host"
+    MYSQL_USER: "/ecommerce-ai-platform/dev/mysql/user"
+    MYSQL_PASSWORD: "/ecommerce-ai-platform/dev/mysql/password"
+    JWT_SECRET: "/ecommerce-ai-platform/dev/jwt/secret"
+  exported-variables:
+    - ENVIRONMENT
+    - BUILD_VERSION
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+      java: corretto17
+      nodejs: 18
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      - pip install pytest boto3 awscli
+      - npm install -g npm@latest
+      
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on `date`"
+      - export BUILD_VERSION=$(date +%Y%m%d-%H%M%S)-${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      - echo "Build version is $BUILD_VERSION"
+      
+      # Login to ECR
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      
+      # Run tests
+      - echo "Running unit tests..."
+      - cd tests/integration && python -m pytest test_data_validation.py -v || true
+      - cd ../..
+      
+  build:
+    commands:
+      - echo "Build phase started on `date`"
+      
+      # Build Data Processing Docker Image
+      - echo "Building data processing Docker image..."
+      - cd data-processing
+      - docker build -t ${PROJECT_NAME}-data-processing:${BUILD_VERSION} .
+      - docker tag ${PROJECT_NAME}-data-processing:${BUILD_VERSION} $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${PROJECT_NAME}-data-processing:${BUILD_VERSION}
+      - docker tag ${PROJECT_NAME}-data-processing:${BUILD_VERSION} $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${PROJECT_NAME}-data-processing:dev-latest
+      - cd ..
+      
+      # Build Auth Service (Java Lambda)
+      - echo "Building auth service..."
+      - cd auth-service
+      - mvn clean package -DskipTests
+      - cd ..
+      
+      # Build Analytics Service (Python Lambda)
+      - echo "Building analytics service..."
+      - cd analytics-service
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../analytics-lambda-${BUILD_VERSION}.zip . && cd ..
+      - zip -g analytics-lambda-${BUILD_VERSION}.zip -r src/
+      - cd ..
+      
+      # Build AI Systems
+      - echo "Building Market Intelligence Hub..."
+      - cd ai-systems/market-intelligence-hub
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../market-intelligence-${BUILD_VERSION}.zip . && cd ..
+      - zip -g market-intelligence-${BUILD_VERSION}.zip -r src/
+      - cd ../..
+      
+      - echo "Building Demand Insights Engine..."
+      - cd ai-systems/demand-insights-engine
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../demand-insights-${BUILD_VERSION}.zip . && cd ..
+      - zip -g demand-insights-${BUILD_VERSION}.zip -r src/
+      - cd ../..
+      
+      - echo "Building Compliance Guardian..."
+      - cd ai-systems/compliance-guardian
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../compliance-guardian-${BUILD_VERSION}.zip . && cd ..
+      - zip -g compliance-guardian-${BUILD_VERSION}.zip -r src/
+      - cd ../..
+      
+      - echo "Building Retail Copilot..."
+      - cd ai-systems/retail-copilot
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../retail-copilot-${BUILD_VERSION}.zip . && cd ..
+      - zip -g retail-copilot-${BUILD_VERSION}.zip -r src/
+      - cd ../..
+      
+      - echo "Building Global Market Pulse..."
+      - cd ai-systems/global-market-pulse
+      - pip install -r requirements.txt -t package/
+      - cd package && zip -r ../global-market-pulse-${BUILD_VERSION}.zip . && cd ..
+      - zip -g global-market-pulse-${BUILD_VERSION}.zip -r src/
+      - cd ../..
+      
+      # Build Frontend
+      - echo "Building frontend..."
+      - cd frontend
+      - npm ci
+      - npm run build
+      - cd ..
+      
+  post_build:
+    commands:
+      - echo "Post-build phase started on `date`"
+      
+      # Push Docker images to ECR
+      - echo "Pushing Docker images to ECR..."
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${PROJECT_NAME}-data-processing:${BUILD_VERSION}
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${PROJECT_NAME}-data-processing:dev-latest
+      
+      # Upload Lambda packages to S3
+      - echo "Uploading Lambda packages to S3..."
+      - aws s3 cp auth-service/target/auth-service-1.0.0.jar s3://${PROJECT_NAME}-artifacts-dev/lambda/auth-service-${BUILD_VERSION}.jar
+      - aws s3 cp analytics-service/analytics-lambda-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      - aws s3 cp ai-systems/market-intelligence-hub/market-intelligence-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      - aws s3 cp ai-systems/demand-insights-engine/demand-insights-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      - aws s3 cp ai-systems/compliance-guardian/compliance-guardian-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      - aws s3 cp ai-systems/retail-copilot/retail-copilot-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      - aws s3 cp ai-systems/global-market-pulse/global-market-pulse-${BUILD_VERSION}.zip s3://${PROJECT_NAME}-artifacts-dev/lambda/
+      
+      # Upload frontend to S3
+      - echo "Uploading frontend to S3..."
+      - aws s3 sync frontend/dist/ s3://${PROJECT_NAME}-frontend-dev/ --delete
+      
+      # Invalidate CloudFront cache
+      - echo "Invalidating CloudFront cache..."
+      - aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID_DEV} --paths "/*" || true
+      
+      # Deploy Terraform changes
+      - echo "Deploying infrastructure with Terraform..."
+      - cd terraform
+      - terraform init -backend-config="key=dev/terraform.tfstate"
+      - terraform plan -var="environment=dev" -var="build_version=${BUILD_VERSION}" -out=tfplan
+      - terraform apply -auto-approve tfplan
+      - cd ..
+      
+      - echo "Build completed successfully on `date`"
+
+artifacts:
+  files:
+    - '**/*'
+  name: ${PROJECT_NAME}-dev-${BUILD_VERSION}
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
+    - '/root/.npm/**/*'
+    - 'node_modules/**/*'

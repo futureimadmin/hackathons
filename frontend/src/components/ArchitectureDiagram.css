@@ -1,0 +1,618 @@
+/* eCommerce AI Analytics Platform - Architecture Diagram Styles */
+
+.architecture-container {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.architecture-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+}
+
+.architecture-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Process Flow Panel */
+.process-flow-panel {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.process-flow-panel h2 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.process-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.process-step {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.process-step:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-color: #667eea;
+}
+
+.process-step.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #764ba2;
+}
+
+.process-step.highlighted {
+  border-color: #4CAF50;
+  border-width: 3px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+}
+
+.step-number {
+  background: #667eea;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 15px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.process-step.selected .step-number {
+  background: white;
+  color: #667eea;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.step-description {
+  font-size: 0.9rem;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  line-height: 1.5;
+}
+
+/* Main Architecture Diagram */
+.architecture-diagram {
+  background: white;
+  border-radius: 15px;
+  padding: 40px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+  min-height: 1200px;
+}
+
+/* Boundaries */
+.boundary {
+  border: 3px dashed;
+  border-radius: 15px;
+  padding: 30px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.boundary-label {
+  position: absolute;
+  top: -15px;
+  left: 20px;
+  background: white;
+  padding: 5px 15px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 5px;
+}
+
+.on-premise {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.on-premise .boundary-label {
+  color: #2E7D32;
+}
+
+.aws-cloud {
+  border-color: #FF9800;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  min-height: 800px;
+}
+
+.aws-cloud .boundary-label {
+  color: #E65100;
+}
+
+.user-zone {
+  border-color: #2196F3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.user-zone .boundary-label {
+  color: #0D47A1;
+}
+
+/* VPC and Subnets */
+.vpc-boundary {
+  border: 2px solid #1976D2;
+  border-radius: 10px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  margin: 20px 0;
+}
+
+.vpc-label {
+  background: #1976D2;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 5px;
+  display: inline-block;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.subnet {
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 15px 0;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.subnet-label {
+  width: 100%;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.public-subnet {
+  border-color: #42A5F5;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.public-subnet .subnet-label {
+  background: #42A5F5;
+  color: white;
+}
+
+.private-subnet {
+  border-color: #AB47BC;
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+}
+
+.private-subnet .subnet-label {
+  background: #AB47BC;
+  color: white;
+}
+
+/* Components */
+.component {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  min-width: 180px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.component:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  border-color: #667eea;
+}
+
+.component.highlight {
+  border-color: #4CAF50;
+  border-width: 3px;
+  animation: glow 1.5s infinite;
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5), 0 0 10px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.5);
+  }
+}
+
+.component-icon {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.component-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.component-detail {
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+  margin: 3px 0;
+}
+
+.flow-number {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  border: 2px solid white;
+}
+
+/* Specific Component Styles */
+.mysql {
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  color: white;
+}
+
+.mysql .component-name,
+.mysql .component-detail {
+  color: white;
+}
+
+.api-gateway {
+  background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
+  color: white;
+}
+
+.api-gateway .component-name,
+.api-gateway .component-detail {
+  color: white;
+}
+
+.lambda {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  color: white;
+}
+
+.lambda .component-name,
+.lambda .component-detail {
+  color: white;
+}
+
+.dms {
+  background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);
+  color: white;
+}
+
+.dms .component-name,
+.dms .component-detail {
+  color: white;
+}
+
+.batch {
+  background: linear-gradient(135deg, #00BCD4 0%, #4DD0E1 100%);
+  color: white;
+}
+
+.batch .component-name,
+.batch .component-detail {
+  color: white;
+}
+
+.s3 {
+  background: linear-gradient(135deg, #F44336 0%, #EF5350 100%);
+  color: white;
+}
+
+.s3 .component-name,
+.s3 .component-detail {
+  color: white;
+}
+
+.glue {
+  background: linear-gradient(135deg, #673AB7 0%, #9575CD 100%);
+  color: white;
+}
+
+.glue .component-name,
+.glue .component-detail {
+  color: white;
+}
+
+.athena {
+  background: linear-gradient(135deg, #3F51B5 0%, #5C6BC0 100%);
+  color: white;
+}
+
+.athena .component-name,
+.athena .component-detail {
+  color: white;
+}
+
+.frontend {
+  background: linear-gradient(135deg, #00BCD4 0%, #26C6DA 100%);
+  color: white;
+}
+
+.frontend .component-name,
+.frontend .component-detail {
+  color: white;
+}
+
+/* Managed Services */
+.managed-services {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.service-group {
+  flex: 1;
+  min-width: 300px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  padding: 20px;
+  border: 2px solid #E0E0E0;
+}
+
+.service-group-label {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #667eea;
+}
+
+.service-group .component {
+  margin-bottom: 15px;
+}
+
+/* User Zone */
+.user-icon {
+  font-size: 4rem;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.user-label {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  color: #0D47A1;
+}
+
+/* AI Systems Panel */
+.ai-systems-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  padding: 30px;
+  margin-top: 30px;
+  color: white;
+}
+
+.ai-systems-panel h3 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.ai-systems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.ai-system {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.ai-system:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ai-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.ai-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.ai-tech {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Flow Arrows */
+.flow-arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.flow-path {
+  animation: dash 2s linear infinite;
+  stroke-dasharray: 10;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* Legend */
+.legend {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.legend h3 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-color {
+  width: 40px;
+  height: 30px;
+  border-radius: 5px;
+  border: 2px solid #ddd;
+}
+
+.flow-number-legend {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .managed-services {
+    flex-direction: column;
+  }
+  
+  .ai-systems-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .architecture-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .process-steps {
+    grid-template-columns: 1fr;
+  }
+  
+  .subnet {
+    flex-direction: column;
+  }
+  
+  .component {
+    min-width: 100%;
+  }
+  
+  .ai-systems-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .architecture-container {
+    background: white;
+  }
+  
+  .process-flow-panel {
+    page-break-after: always;
+  }
+  
+  .component:hover {
+    transform: none;
+  }
+}

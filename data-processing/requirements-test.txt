@@ -1,0 +1,20 @@
+# Test dependencies for data processing pipeline
+
+# Testing frameworks
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+
+# Property-based testing
+hypothesis>=6.82.0
+
+# Mocking and fixtures
+pytest-mock>=3.11.1
+
+# Test data generation
+faker>=19.2.0
+
+# Code quality
+flake8>=6.0.0
+black>=23.7.0
+mypy>=1.4.1

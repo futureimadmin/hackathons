@@ -1,0 +1,154 @@
+# Load Testing Configuration for eCommerce AI Platform
+# Tool: Apache JMeter / Locust / Artillery
+
+project_name: ecommerce-ai-platform
+test_environment: staging
+api_base_url: https://api-staging.example.com
+
+# Load Test Scenarios
+scenarios:
+  # Scenario 1: API Gateway Load Test
+  - name: api_gateway_load_test
+    description: Test API Gateway under 1000 concurrent users
+    target_rps: 1000  # Requests per second
+    duration: 300  # 5 minutes
+    ramp_up: 60  # 1 minute ramp-up
+    endpoints:
+      - path: /auth/login
+        method: POST
+        weight: 10
+        body:
+          email: "loadtest{{user_id}}@example.com"
+          password: "TestPassword123!"
+      
+      - path: /market-intelligence/forecast
+        method: POST
+        weight: 20
+        auth: required
+        body:
+          product_id: "PROD{{random_product}}"
+          periods: 30
+          model: "auto"
+      
+      - path: /demand-insights/segments
+        method: GET
+        weight: 15
+        auth: required
+        params:
+          n_clusters: 4
+      
+      - path: /compliance/fraud-detection
+        method: POST
+        weight: 15
+        auth: required
+        body:
+          transaction_ids: ["TXN{{random_txn}}"]
+      
+      - path: /retail-copilot/chat
+        method: POST
+        weight: 20
+        auth: required
+        body:
+          user_id: "USER{{user_id}}"
+          message: "What are the top selling products?"
+      
+      - path: /global-market/trends
+        method: GET
+        weight: 20
+        auth: required
+        params:
+          product_id: "PROD{{random_product}}"
+          days: 90
+
+  # Scenario 2: Athena Query Performance
+  - name: athena_query_performance
+    description: Test Athena query performance with large datasets
+    concurrent_queries: 50
+    duration: 600  # 10 minutes
+    queries:
+      - name: simple_select
+        sql: "SELECT * FROM customers LIMIT 1000"
+        expected_time_ms: 2000
+      
+      - name: aggregation
+        sql: "SELECT category, COUNT(*) as count, AVG(price) as avg_price FROM products GROUP BY category"
+        expected_time_ms: 5000
+      
+      - name: join_query
+        sql: "SELECT c.customer_id, c.email, COUNT(o.order_id) as order_count FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.email"
+        expected_time_ms: 10000
+      
+      - name: complex_analytics
+        sql: "SELECT DATE_TRUNC('month', order_date) as month, category, SUM(total_amount) as revenue FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY DATE_TRUNC('month', order_date), category ORDER BY month DESC, revenue DESC"
+        expected_time_ms: 15000
+
+  # Scenario 3: Data Pipeline Throughput
+  - name: data_pipeline_throughput
+    description: Test data pipeline processing capacity
+    test_records: 100000
+    batch_size: 1000
+    stages:
+      - name: dms_replication
+        expected_throughput_rps: 500  # Records per second
+        max_lag_seconds: 60
+      
+      - name: raw_to_curated
+        expected_throughput_rps: 200
+        max_processing_time_seconds: 300
+      
+      - name: curated_to_prod
+        expected_throughput_rps: 150
+        max_processing_time_seconds: 400
+
+# Performance Thresholds
+thresholds:
+  api_gateway:
+    avg_response_time_ms: 500
+    p95_response_time_ms: 1000
+    p99_response_time_ms: 2000
+    error_rate_percent: 1.0
+    throughput_rps: 1000
+  
+  lambda:
+    cold_start_ms: 3000
+    warm_response_ms: 200
+    memory_utilization_percent: 80
+    timeout_rate_percent: 0.1
+  
+  athena:
+    simple_query_ms: 2000
+    complex_query_ms: 15000
+    concurrent_queries: 50
+    data_scanned_gb_per_query: 1.0
+  
+  data_pipeline:
+    dms_lag_seconds: 60
+    batch_processing_minutes: 10
+    glue_crawler_minutes: 5
+    end_to_end_minutes: 30
+
+# Monitoring During Tests
+monitoring:
+  cloudwatch_metrics:
+    - API Gateway 4xx/5xx errors
+    - Lambda invocations, errors, duration
+    - DynamoDB read/write capacity
+    - S3 request rate
+    - Athena query execution time
+    - Batch job status
+  
+  custom_metrics:
+    - User authentication success rate
+    - AI model inference time
+    - Data consistency validation rate
+    - Cache hit rate
+
+# Test Data Generation
+test_data:
+  users: 10000
+  products: 5000
+  orders: 50000
+  transactions: 100000
+  
+  generation_strategy: pre-generated
+  cleanup_after_test: true

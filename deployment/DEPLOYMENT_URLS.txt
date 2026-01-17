@@ -1,0 +1,22 @@
+﻿# eCommerce AI Platform - Deployment URLs
+# Generated: 2026-01-17 22:11:45
+
+## Frontend Application
+http://futureim-ecommerce-ai-platform-frontend-dev.s3-website-us-east-2.amazonaws.com
+
+## API Gateway
+
+
+## MySQL Database
+Host: 172.20.10.4
+Database: ecommerce
+DataSize: ~500MB
+
+## AWS Console Links
+CloudWatch Logs: https://console.aws.amazon.com/cloudwatch/home?region=us-east-2#logsV2:log-groups
+Lambda Functions: https://console.aws.amazon.com/lambda/home?region=us-east-2#/functions
+S3 Buckets: https://s3.console.aws.amazon.com/s3/home?region=us-east-2
+API Gateway: https://console.aws.amazon.com/apigateway/home?region=us-east-2
+
+## Estimated Monthly Cost
+Development Environment: ~$280-450/month

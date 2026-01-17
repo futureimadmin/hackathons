@@ -1,0 +1,7 @@
+.kiro
+.vscode
+auth-service/target
+frontend/dist
+frontend/node_modules
+terraform/.terraform
+terraform/.terraform.lock.hcl
