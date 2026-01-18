@@ -1,0 +1,11 @@
+# Production Environment Variables
+
+aws_region   = "us-east-2"
+environment  = "prod"
+project_name = "futureim-ecommerce-ai-platform"
+vpc_cidr     = "10.1.0.0/16"
+
+# GitHub Configuration
+github_repo   = "futureimadmin/hackathons"
+github_branch = "master"
+github_token  = "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"
