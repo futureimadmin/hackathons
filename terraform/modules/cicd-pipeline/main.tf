@@ -235,7 +235,11 @@ resource "aws_secretsmanager_secret" "github_token" {
 
 resource "aws_secretsmanager_secret_version" "github_token" {
   secret_id     = aws_secretsmanager_secret.github_token.id
-  secret_string = var.github_token
+  secret_string = var.github_token != "" ? var.github_token : "placeholder-token-update-manually"
+  
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
 
 # CodeBuild Project - Infrastructure
@@ -395,8 +399,9 @@ resource "aws_codebuild_project" "frontend" {
 
 # CodePipeline
 resource "aws_codepipeline" "main" {
-  name     = "${var.project_name}-pipeline-${var.environment}"
-  role_arn = aws_iam_role.codepipeline.arn
+  name          = "${var.project_name}-pipeline-${var.environment}"
+  role_arn      = aws_iam_role.codepipeline.arn
+  pipeline_type = "V2"
 
   artifact_store {
     location = aws_s3_bucket.pipeline_artifacts.bucket
@@ -420,10 +425,11 @@ resource "aws_codepipeline" "main" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        ConnectionArn    = aws_codestarconnections_connection.github.arn
-        FullRepositoryId = var.github_repo
-        BranchName       = var.github_branch
-        DetectChanges    = true
+        ConnectionArn        = aws_codestarconnections_connection.github.arn
+        FullRepositoryId     = var.github_repo
+        BranchName           = var.github_branch
+        DetectChanges        = "true"
+        OutputArtifactFormat = "CODE_ZIP"
       }
     }
   }
