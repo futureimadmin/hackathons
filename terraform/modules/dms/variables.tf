@@ -58,6 +58,7 @@ variable "source_endpoint_config" {
 variable "source_password_secret_arn" {
   description = "ARN of the secret containing source database password"
   type        = string
+  default     = null
 }
 
 variable "target_s3_buckets" {
