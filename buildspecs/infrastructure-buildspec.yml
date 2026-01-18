@@ -17,6 +17,7 @@ phases:
       - chmod +x terraform
       - sudo mv terraform /usr/local/bin/terraform
       - terraform --version
+      - cd -
 
   pre_build:
     commands:
