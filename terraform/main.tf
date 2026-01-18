@@ -83,6 +83,66 @@ module "dynamodb_users" {
   }
 }
 
+# S3 Frontend Bucket
+module "frontend_bucket" {
+  source = "./modules/s3-frontend"
+  
+  bucket_name = "${var.project_name}-frontend-${var.environment}"
+  
+  tags = {
+    Environment = var.environment
+    System      = "Frontend"
+  }
+}
+
+# API Gateway Module (infrastructure only - Lambda functions will be deployed separately)
+module "api_gateway" {
+  source = "./modules/api-gateway"
+  
+  api_name   = "${var.project_name}-api"
+  stage_name = var.environment
+  
+  # Placeholder Lambda ARNs - will be updated after Lambda deployment
+  # Lambda functions don't exist yet, so we use placeholder ARNs
+  # The auth Lambda permission is commented out in the module
+  # Other Lambda permissions have count parameters that check for empty strings
+  
+  # Auth Lambda (required - permission commented out in module)
+  auth_lambda_function_name = "${var.project_name}-auth-${var.environment}"
+  auth_lambda_invoke_arn    = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${var.project_name}-auth-${var.environment}/invocations"
+  
+  # Optional Lambda functions - using placeholder ARNs (functions don't exist yet)
+  # These will return 500 errors until Lambda functions are deployed
+  # Permissions are skipped via count parameters (function names are empty)
+  # Using placeholder ARNs to keep integrations valid (not empty)
+  analytics_lambda_function_name = ""
+  analytics_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-analytics-dev/invocations"
+  
+  market_intelligence_lambda_function_name = ""
+  market_intelligence_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-market-intelligence-dev/invocations"
+  
+  demand_insights_lambda_function_name = ""
+  demand_insights_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-demand-insights-dev/invocations"
+  
+  compliance_guardian_lambda_function_name = ""
+  compliance_guardian_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-compliance-guardian-dev/invocations"
+  
+  retail_copilot_lambda_function_name = ""
+  retail_copilot_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-retail-copilot-dev/invocations"
+  
+  global_market_pulse_lambda_function_name = ""
+  global_market_pulse_lambda_invoke_arn    = "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:450133579764:function:futureim-ecommerce-ai-platform-global-market-pulse-dev/invocations"
+  
+  kms_key_arn         = module.kms.kms_key_arn
+  cors_allowed_origin = "http://${var.project_name}-frontend-${var.environment}.s3-website.${var.aws_region}.amazonaws.com"
+  enable_waf          = false  # Disable WAF for dev environment
+  enable_xray_tracing = true
+  
+  tags = {
+    Environment = var.environment
+  }
+}
+
 # S3 Data Lake Modules - One for each system
 
 # Market Intelligence Hub Data Lake
@@ -152,6 +212,27 @@ module "global_market_pulse_data_lake" {
   
   tags = {
     System = "Global Market Pulse"
+  }
+}
+
+# CI/CD Pipeline
+module "cicd_pipeline" {
+  source = "./modules/cicd-pipeline"
+  
+  project_name              = var.project_name
+  environment               = var.environment
+  aws_region                = var.aws_region
+  kms_key_arn               = module.kms.kms_key_arn
+  lambda_execution_role_arn = module.iam.lambda_execution_role_arn
+  frontend_bucket_name      = module.frontend_bucket.bucket_name
+  api_gateway_url           = module.api_gateway.api_endpoint
+  github_repo               = var.github_repo
+  github_branch             = var.github_branch
+  github_token              = var.github_token
+  
+  tags = {
+    Environment = var.environment
+    System      = "CI/CD"
   }
 }
 
@@ -248,4 +329,57 @@ output "all_systems_buckets" {
     retail_copilot          = module.retail_copilot_data_lake.all_bucket_names
     global_market_pulse     = module.global_market_pulse_data_lake.all_bucket_names
   }
+}
+
+# API Gateway Outputs
+output "api_gateway_id" {
+  description = "API Gateway REST API ID"
+  value       = module.api_gateway.api_id
+}
+
+output "api_gateway_url" {
+  description = "API Gateway base URL"
+  value       = module.api_gateway.api_endpoint
+}
+
+output "api_gateway_stage" {
+  description = "API Gateway stage name"
+  value       = module.api_gateway.api_stage_name
+}
+
+output "api_endpoints" {
+  description = "API Gateway endpoints"
+  value       = module.api_gateway.api_endpoints
+}
+
+# Frontend Outputs
+output "frontend_bucket_name" {
+  description = "Frontend S3 bucket name"
+  value       = module.frontend_bucket.bucket_name
+}
+
+output "frontend_website_url" {
+  description = "Frontend website URL"
+  value       = module.frontend_bucket.website_url
+}
+
+# CI/CD Pipeline Outputs
+output "pipeline_name" {
+  description = "CodePipeline name"
+  value       = module.cicd_pipeline.pipeline_name
+}
+
+output "pipeline_url" {
+  description = "CodePipeline console URL"
+  value       = module.cicd_pipeline.pipeline_url
+}
+
+output "github_connection_arn" {
+  description = "GitHub CodeStar connection ARN (requires manual approval)"
+  value       = module.cicd_pipeline.github_connection_arn
+}
+
+output "lambda_execution_role_arn" {
+  description = "Lambda execution role ARN"
+  value       = module.iam.lambda_execution_role_arn
 }

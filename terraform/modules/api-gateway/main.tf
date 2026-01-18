@@ -323,7 +323,6 @@ resource "aws_api_gateway_integration" "analytics_insights_lambda" {
 
 # Lambda integration for /market-intelligence/forecast
 resource "aws_api_gateway_integration" "mi_forecast_lambda" {
-  count                   = var.market_intelligence_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.mi_forecast.id
   http_method             = aws_api_gateway_method.mi_forecast_post.http_method
@@ -334,7 +333,6 @@ resource "aws_api_gateway_integration" "mi_forecast_lambda" {
 
 # Lambda integration for /market-intelligence/trends
 resource "aws_api_gateway_integration" "mi_trends_lambda" {
-  count                   = var.market_intelligence_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.mi_trends.id
   http_method             = aws_api_gateway_method.mi_trends_get.http_method
@@ -345,7 +343,6 @@ resource "aws_api_gateway_integration" "mi_trends_lambda" {
 
 # Lambda integration for /market-intelligence/competitive-pricing
 resource "aws_api_gateway_integration" "mi_competitive_pricing_lambda" {
-  count                   = var.market_intelligence_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.mi_competitive_pricing.id
   http_method             = aws_api_gateway_method.mi_competitive_pricing_get.http_method
@@ -356,7 +353,6 @@ resource "aws_api_gateway_integration" "mi_competitive_pricing_lambda" {
 
 # Lambda integration for /market-intelligence/compare-models
 resource "aws_api_gateway_integration" "mi_compare_models_lambda" {
-  count                   = var.market_intelligence_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.mi_compare_models.id
   http_method             = aws_api_gateway_method.mi_compare_models_post.http_method
@@ -366,13 +362,15 @@ resource "aws_api_gateway_integration" "mi_compare_models_lambda" {
 }
 
 # Lambda permission for API Gateway to invoke auth function
-resource "aws_lambda_permission" "api_gateway_auth" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = var.auth_lambda_function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
-}
+# NOTE: This will fail until the auth Lambda function is deployed
+# Commented out to allow API Gateway deployment without Lambda functions
+# resource "aws_lambda_permission" "api_gateway_auth" {
+#   statement_id  = "AllowAPIGatewayInvoke"
+#   action        = "lambda:InvokeFunction"
+#   function_name = var.auth_lambda_function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
+# }
 
 # Lambda permission for API Gateway to invoke analytics function
 resource "aws_lambda_permission" "api_gateway_analytics" {
@@ -449,10 +447,40 @@ resource "aws_api_gateway_deployment" "main" {
     aws_api_gateway_integration.forgot_password_lambda,
     aws_api_gateway_integration.reset_password_lambda,
     aws_api_gateway_integration.verify_lambda,
-    aws_api_gateway_integration.analytics_query_lambda,
-    aws_api_gateway_integration.analytics_forecast_lambda,
-    aws_api_gateway_integration.analytics_insights_lambda,
+    # Conditional integrations removed from depends_on
+    # They will be included automatically when they exist
   ]
+}
+
+# IAM role for API Gateway to write to CloudWatch Logs
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "${var.api_name}-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# IAM policy attachment for API Gateway CloudWatch Logs
+resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
+  role       = aws_iam_role.api_gateway_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+# API Gateway account settings (sets CloudWatch Logs role for the account)
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
 }
 
 # API Gateway stage
@@ -482,6 +510,8 @@ resource "aws_api_gateway_stage" "main" {
   xray_tracing_enabled = var.enable_xray_tracing
 
   tags = var.tags
+  
+  depends_on = [aws_api_gateway_account.main]
 }
 
 # CloudWatch log group for API Gateway
@@ -719,7 +749,6 @@ resource "aws_api_gateway_method" "di_at_risk_customers_get" {
 
 # Lambda integrations for Demand Insights endpoints
 resource "aws_api_gateway_integration" "di_segments_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_segments.id
   http_method             = aws_api_gateway_method.di_segments_get.http_method
@@ -729,7 +758,6 @@ resource "aws_api_gateway_integration" "di_segments_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_forecast_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_forecast.id
   http_method             = aws_api_gateway_method.di_forecast_post.http_method
@@ -739,7 +767,6 @@ resource "aws_api_gateway_integration" "di_forecast_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_price_elasticity_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_price_elasticity.id
   http_method             = aws_api_gateway_method.di_price_elasticity_post.http_method
@@ -749,7 +776,6 @@ resource "aws_api_gateway_integration" "di_price_elasticity_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_price_optimization_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_price_optimization.id
   http_method             = aws_api_gateway_method.di_price_optimization_post.http_method
@@ -759,7 +785,6 @@ resource "aws_api_gateway_integration" "di_price_optimization_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_clv_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_clv.id
   http_method             = aws_api_gateway_method.di_clv_post.http_method
@@ -769,7 +794,6 @@ resource "aws_api_gateway_integration" "di_clv_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_churn_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_churn.id
   http_method             = aws_api_gateway_method.di_churn_post.http_method
@@ -779,7 +803,6 @@ resource "aws_api_gateway_integration" "di_churn_lambda" {
 }
 
 resource "aws_api_gateway_integration" "di_at_risk_customers_lambda" {
-  count                   = var.demand_insights_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.di_at_risk_customers.id
   http_method             = aws_api_gateway_method.di_at_risk_customers_get.http_method
@@ -907,7 +930,6 @@ resource "aws_api_gateway_method" "compliance_fraud_statistics_get" {
 
 # Lambda integrations for Compliance Guardian endpoints
 resource "aws_api_gateway_integration" "compliance_fraud_detection_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_fraud_detection.id
   http_method             = aws_api_gateway_method.compliance_fraud_detection_post.http_method
@@ -917,7 +939,6 @@ resource "aws_api_gateway_integration" "compliance_fraud_detection_lambda" {
 }
 
 resource "aws_api_gateway_integration" "compliance_risk_score_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_risk_score.id
   http_method             = aws_api_gateway_method.compliance_risk_score_post.http_method
@@ -927,7 +948,6 @@ resource "aws_api_gateway_integration" "compliance_risk_score_lambda" {
 }
 
 resource "aws_api_gateway_integration" "compliance_high_risk_transactions_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_high_risk_transactions.id
   http_method             = aws_api_gateway_method.compliance_high_risk_transactions_get.http_method
@@ -937,7 +957,6 @@ resource "aws_api_gateway_integration" "compliance_high_risk_transactions_lambda
 }
 
 resource "aws_api_gateway_integration" "compliance_pci_compliance_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_pci_compliance.id
   http_method             = aws_api_gateway_method.compliance_pci_compliance_post.http_method
@@ -947,7 +966,6 @@ resource "aws_api_gateway_integration" "compliance_pci_compliance_lambda" {
 }
 
 resource "aws_api_gateway_integration" "compliance_compliance_report_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_compliance_report.id
   http_method             = aws_api_gateway_method.compliance_compliance_report_get.http_method
@@ -957,7 +975,6 @@ resource "aws_api_gateway_integration" "compliance_compliance_report_lambda" {
 }
 
 resource "aws_api_gateway_integration" "compliance_fraud_statistics_lambda" {
-  count                   = var.compliance_guardian_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.compliance_fraud_statistics.id
   http_method             = aws_api_gateway_method.compliance_fraud_statistics_get.http_method
@@ -1136,7 +1153,6 @@ resource "aws_api_gateway_method" "copilot_sales_report_get" {
 
 # Lambda integrations for Retail Copilot endpoints
 resource "aws_api_gateway_integration" "copilot_chat_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_chat.id
   http_method             = aws_api_gateway_method.copilot_chat_post.http_method
@@ -1146,7 +1162,6 @@ resource "aws_api_gateway_integration" "copilot_chat_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_conversations_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_conversations.id
   http_method             = aws_api_gateway_method.copilot_conversations_get.http_method
@@ -1156,7 +1171,6 @@ resource "aws_api_gateway_integration" "copilot_conversations_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_conversation_post_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_conversation.id
   http_method             = aws_api_gateway_method.copilot_conversation_post.http_method
@@ -1166,7 +1180,6 @@ resource "aws_api_gateway_integration" "copilot_conversation_post_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_conversation_get_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_conversation.id
   http_method             = aws_api_gateway_method.copilot_conversation_get.http_method
@@ -1176,7 +1189,6 @@ resource "aws_api_gateway_integration" "copilot_conversation_get_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_conversation_delete_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_conversation.id
   http_method             = aws_api_gateway_method.copilot_conversation_delete.http_method
@@ -1186,7 +1198,6 @@ resource "aws_api_gateway_integration" "copilot_conversation_delete_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_inventory_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_inventory.id
   http_method             = aws_api_gateway_method.copilot_inventory_get.http_method
@@ -1196,7 +1207,6 @@ resource "aws_api_gateway_integration" "copilot_inventory_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_orders_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_orders.id
   http_method             = aws_api_gateway_method.copilot_orders_get.http_method
@@ -1206,7 +1216,6 @@ resource "aws_api_gateway_integration" "copilot_orders_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_customers_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_customers.id
   http_method             = aws_api_gateway_method.copilot_customers_get.http_method
@@ -1216,7 +1225,6 @@ resource "aws_api_gateway_integration" "copilot_customers_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_recommendations_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_recommendations.id
   http_method             = aws_api_gateway_method.copilot_recommendations_post.http_method
@@ -1226,7 +1234,6 @@ resource "aws_api_gateway_integration" "copilot_recommendations_lambda" {
 }
 
 resource "aws_api_gateway_integration" "copilot_sales_report_lambda" {
-  count                   = var.retail_copilot_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.copilot_sales_report.id
   http_method             = aws_api_gateway_method.copilot_sales_report_get.http_method
@@ -1387,7 +1394,6 @@ resource "aws_api_gateway_method" "gm_trend_changes_post" {
 
 # Lambda integrations for Global Market Pulse endpoints
 resource "aws_api_gateway_integration" "gm_trends_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_trends.id
   http_method             = aws_api_gateway_method.gm_trends_get.http_method
@@ -1397,7 +1403,6 @@ resource "aws_api_gateway_integration" "gm_trends_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_regional_prices_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_regional_prices.id
   http_method             = aws_api_gateway_method.gm_regional_prices_get.http_method
@@ -1407,7 +1412,6 @@ resource "aws_api_gateway_integration" "gm_regional_prices_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_price_comparison_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_price_comparison.id
   http_method             = aws_api_gateway_method.gm_price_comparison_post.http_method
@@ -1417,7 +1421,6 @@ resource "aws_api_gateway_integration" "gm_price_comparison_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_opportunities_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_opportunities.id
   http_method             = aws_api_gateway_method.gm_opportunities_post.http_method
@@ -1427,7 +1430,6 @@ resource "aws_api_gateway_integration" "gm_opportunities_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_competitor_analysis_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_competitor_analysis.id
   http_method             = aws_api_gateway_method.gm_competitor_analysis_post.http_method
@@ -1437,7 +1439,6 @@ resource "aws_api_gateway_integration" "gm_competitor_analysis_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_market_share_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_market_share.id
   http_method             = aws_api_gateway_method.gm_market_share_get.http_method
@@ -1447,7 +1448,6 @@ resource "aws_api_gateway_integration" "gm_market_share_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_growth_rates_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_growth_rates.id
   http_method             = aws_api_gateway_method.gm_growth_rates_get.http_method
@@ -1457,7 +1457,6 @@ resource "aws_api_gateway_integration" "gm_growth_rates_lambda" {
 }
 
 resource "aws_api_gateway_integration" "gm_trend_changes_lambda" {
-  count                   = var.global_market_pulse_lambda_invoke_arn != "" ? 1 : 0
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.gm_trend_changes.id
   http_method             = aws_api_gateway_method.gm_trend_changes_post.http_method

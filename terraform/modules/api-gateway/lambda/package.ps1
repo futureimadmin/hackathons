@@ -40,9 +40,10 @@ if (Get-Command 7z -ErrorAction SilentlyContinue) {
 
 if ($LASTEXITCODE -eq 0 -or (Test-Path "authorizer.zip")) {
     $size = (Get-Item "authorizer.zip").Length / 1MB
-    Write-Host "✓ Package created: authorizer.zip ($([math]::Round($size, 2)) MB)" -ForegroundColor Green
+    $sizeRounded = [math]::Round($size, 2)
+    Write-Host "[OK] Package created: authorizer.zip ($sizeRounded MB)" -ForegroundColor Green
 } else {
-    Write-Host "Error: Failed to create deployment package" -ForegroundColor Red
+    Write-Host "[X] Failed to create deployment package" -ForegroundColor Red
     exit 1
 }
 
