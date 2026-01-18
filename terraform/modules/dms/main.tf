@@ -32,7 +32,7 @@ resource "aws_dms_replication_instance" "main" {
   replication_instance_class   = var.replication_instance_class
   allocated_storage            = var.allocated_storage
   multi_az                     = var.multi_az
-  engine_version               = "3.5.4"
+  engine_version               = "3.5.2"
   auto_minor_version_upgrade   = true
   publicly_accessible          = false
   replication_subnet_group_id  = aws_dms_replication_subnet_group.main.id
@@ -52,12 +52,6 @@ resource "aws_dms_replication_instance" "main" {
   ]
 }
 
-# Retrieve source database password from Secrets Manager
-data "aws_secretsmanager_secret_version" "source_password" {
-  count     = var.source_password_secret_arn != null && var.source_password_secret_arn != "" ? 1 : 0
-  secret_id = var.source_password_secret_arn
-}
-
 # Source Endpoint (On-Premise MySQL)
 resource "aws_dms_endpoint" "source" {
   endpoint_id   = "${var.project_name}-${var.environment}-source-mysql"
@@ -67,7 +61,7 @@ resource "aws_dms_endpoint" "source" {
   server_name   = var.source_endpoint_config.server_name
   port          = var.source_endpoint_config.port
   username      = var.source_endpoint_config.username
-  password      = var.source_password_secret_arn != null && var.source_password_secret_arn != "" ? data.aws_secretsmanager_secret_version.source_password[0].secret_string : "PLACEHOLDER_PASSWORD"
+  password      = data.aws_secretsmanager_secret_version.source_password.secret_string
   database_name = var.source_endpoint_config.database_name
   ssl_mode      = var.source_endpoint_config.ssl_mode
 
@@ -78,6 +72,11 @@ resource "aws_dms_endpoint" "source" {
       Environment = var.environment
     }
   )
+}
+
+# Retrieve source database password from Secrets Manager
+data "aws_secretsmanager_secret_version" "source_password" {
+  secret_id = var.source_password_secret_arn
 }
 
 # Target Endpoints (S3 buckets) - Create one for each system
@@ -157,12 +156,12 @@ resource "aws_iam_role_policy" "dms_s3_policy" {
           "s3:GetObject",
           "s3:ListBucket"
         ]
-        Resource = flatten([
+        Resource = [
           for bucket in values(var.target_s3_buckets) : [
             "arn:aws:s3:::${bucket}",
             "arn:aws:s3:::${bucket}/*"
           ]
-        ])
+        ]
       },
       {
         Effect = "Allow"
