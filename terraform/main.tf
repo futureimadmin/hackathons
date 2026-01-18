@@ -215,6 +215,57 @@ module "global_market_pulse_data_lake" {
   }
 }
 
+# DMS Replication
+module "dms" {
+  source = "./modules/dms"
+
+  project_name                = var.project_name
+  environment                 = var.environment
+  vpc_id                      = module.vpc.vpc_id
+  subnet_ids                  = module.vpc.private_subnet_ids
+  security_group_ids          = [module.vpc.dms_security_group_id]
+  kms_key_arn                 = module.kms.kms_key_arn
+  replication_instance_class  = var.dms_replication_instance_class
+  allocated_storage           = var.dms_allocated_storage
+  multi_az                    = var.dms_multi_az
+
+  source_endpoint_config = {
+    server_name   = var.mysql_server_name
+    port          = var.mysql_port
+    username      = var.mysql_username
+    database_name = var.mysql_database_name
+    ssl_mode      = var.mysql_ssl_mode
+  }
+
+  source_password_secret_arn = var.mysql_password_secret_arn
+
+  target_s3_buckets = {
+    market-intelligence-hub = module.market_intelligence_hub_data_lake.raw_bucket_name
+    demand-insights-engine  = module.demand_insights_engine_data_lake.raw_bucket_name
+    compliance-guardian     = module.compliance_guardian_data_lake.raw_bucket_name
+    retail-copilot          = module.retail_copilot_data_lake.raw_bucket_name
+    global-market-pulse     = module.global_market_pulse_data_lake.raw_bucket_name
+  }
+
+  replication_tasks = var.dms_replication_tasks
+
+  tags = {
+    Environment = var.environment
+    System      = "DMS"
+  }
+
+  depends_on = [
+    module.vpc,
+    module.kms,
+    module.iam,
+    module.market_intelligence_hub_data_lake,
+    module.demand_insights_engine_data_lake,
+    module.compliance_guardian_data_lake,
+    module.retail_copilot_data_lake,
+    module.global_market_pulse_data_lake
+  ]
+}
+
 # CI/CD Pipeline
 module "cicd_pipeline" {
   source = "./modules/cicd-pipeline"
@@ -382,4 +433,30 @@ output "github_connection_arn" {
 output "lambda_execution_role_arn" {
   description = "Lambda execution role ARN"
   value       = module.iam.lambda_execution_role_arn
+}
+
+# DMS Outputs
+output "dms_replication_instance_arn" {
+  description = "DMS replication instance ARN"
+  value       = module.dms.replication_instance_arn
+}
+
+output "dms_replication_instance_id" {
+  description = "DMS replication instance ID"
+  value       = module.dms.replication_instance_id
+}
+
+output "dms_source_endpoint_arn" {
+  description = "DMS source endpoint ARN"
+  value       = module.dms.source_endpoint_arn
+}
+
+output "dms_target_endpoint_arns" {
+  description = "Map of system names to DMS target endpoint ARNs"
+  value       = module.dms.target_endpoint_arns
+}
+
+output "dms_replication_task_arns" {
+  description = "Map of task IDs to DMS replication task ARNs"
+  value       = module.dms.replication_task_arns
 }
