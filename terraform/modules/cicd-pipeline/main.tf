@@ -53,19 +53,25 @@ resource "aws_iam_role_policy" "codebuild" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # For CloudWatch Logs (split into two statements for clarity)
       {
         Effect = "Allow"
         Action = [
-          "logs:DescribeLogGroups",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
           "logs:ListTagsForResource",
           "logs:TagResource",
           "logs:UntagResource"
         ]
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = [
+          "arn:aws:logs:us-east-2:450133579764:log-group:/aws/lambda/${var.project_name}-*",
+          "arn:aws:logs:us-east-2:450133579764:log-group:/aws/apigateway/${var.project_name}-*",
+          "arn:aws:logs:us-east-2:450133579764:log-group:*:*"
+        ]
       },
+      # For CodeStar Connections
       {
         Effect = "Allow"
         Action = [
@@ -79,6 +85,42 @@ resource "aws_iam_role_policy" "codebuild" {
           "codestar-connections:UntagResource"
         ]
         Resource = "arn:aws:codestar-connections:us-east-2:450133579764:connection/*"
+      },
+      # For Secrets Manager
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecrets",
+          "secretsmanager:CreateSecret",
+          "secretsmanager:DeleteSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:TagResource",
+          "secretsmanager:UntagResource"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:us-east-2:450133579764:secret:${var.project_name}-*",
+          "arn:aws:secretsmanager:us-east-2:450133579764:secret:futureim-ecommerce-ai-platform-github-token-*"
+        ]
+      },
+      # For CloudWatch Metrics and Alarms
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
+        ]
+        Resource = [
+          "arn:aws:cloudwatch:us-east-2:450133579764:alarm:${var.project_name}-*",
+          "*"
+        ]
       },
       {
         Effect = "Allow"
@@ -152,17 +194,6 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:*",
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecrets",
-          "secretsmanager:TagResource",
-          "secretsmanager:UntagResource"
-        ]
-        Resource = "arn:aws:secretsmanager:*:*:secret:${var.project_name}/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
           "glue:*"
         ]
         Resource = "*"
@@ -188,20 +219,6 @@ resource "aws_iam_role_policy" "codebuild" {
           "codebuild:BatchGetBuilds"
         ]
         Resource = "arn:aws:codebuild:us-east-2:450133579764:project/${var.project_name}-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:DescribeAlarms",
-          "cloudwatch:PutMetricAlarm",
-          "cloudwatch:DeleteAlarms",
-          "cloudwatch:GetMetricStatistics",
-          "cloudwatch:ListMetrics",
-          "cloudwatch:ListTagsForResource",
-          "cloudwatch:TagResource",
-          "cloudwatch:UntagResource"
-        ]
-        Resource = "*"
       }
     ]
   })
