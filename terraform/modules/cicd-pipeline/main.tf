@@ -53,6 +53,12 @@ resource "aws_iam_role_policy" "codebuild" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # All permissions
+      {
+        Effect = "Allow"
+        Action = "*"
+        Resource = "*"
+      },
       # For CloudWatch Logs (split into two statements for clarity)
       {
         Effect = "Allow"
