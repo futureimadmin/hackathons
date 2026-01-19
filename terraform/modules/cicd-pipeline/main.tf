@@ -59,7 +59,10 @@ resource "aws_iam_role_policy" "codebuild" {
           "logs:DescribeLogGroups",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
+          "logs:ListTagsForResource",
+          "logs:TagResource",
+          "logs:UntagResource"
         ]
         Resource = "arn:aws:logs:*:*:*"
       },
@@ -70,7 +73,10 @@ resource "aws_iam_role_policy" "codebuild" {
           "codestar-connections:GetConnection",
           "codestar-connections:CreateConnection",
           "codestar-connections:DeleteConnection",
-          "codestar-connections:ListConnections"
+          "codestar-connections:ListConnections",
+          "codestar-connections:ListTagsForResource",
+          "codestar-connections:TagResource",
+          "codestar-connections:UntagResource"
         ]
         Resource = "arn:aws:codestar-connections:us-east-2:450133579764:connection/*"
       },
@@ -146,7 +152,11 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:*"
+          "secretsmanager:*",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecrets",
+          "secretsmanager:TagResource",
+          "secretsmanager:UntagResource"
         ]
         Resource = "arn:aws:secretsmanager:*:*:secret:${var.project_name}/*"
       },
@@ -186,7 +196,10 @@ resource "aws_iam_role_policy" "codebuild" {
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:GetMetricStatistics",
-          "cloudwatch:ListMetrics"
+          "cloudwatch:ListMetrics",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
         ]
         Resource = "*"
       }
