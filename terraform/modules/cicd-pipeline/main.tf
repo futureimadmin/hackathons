@@ -74,10 +74,16 @@ resource "aws_iam_role_policy" "codebuild" {
           "arn:aws:s3:::${var.frontend_bucket_name}",
           "arn:aws:s3:::${var.project_name}-*/*",
           "arn:aws:s3:::${var.project_name}-*",
+          "arn:aws:s3:::compliance-guardian-*/*",
+          "arn:aws:s3:::compliance-guardian-*",
+          "arn:aws:s3:::global-market-pulse-*/*",
+          "arn:aws:s3:::global-market-pulse-*",
+          "arn:aws:s3:::demand-insights-engine-*/*",
+          "arn:aws:s3:::demand-insights-engine-*",
           "arn:aws:s3:::retail-copilot-*/*",
           "arn:aws:s3:::retail-copilot-*",
-          "arn:aws:s3:::market-intelligence-hub-*",
-          "arn:aws:s3:::market-intelligence-hub-*/*"
+          "arn:aws:s3:::market-intelligence-hub-*/*",
+          "arn:aws:s3:::market-intelligence-hub-*"
         ]
       },
       {
