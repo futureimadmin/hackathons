@@ -56,6 +56,7 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
+          "logs:DescribeLogGroups",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -65,11 +66,24 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
+          "codestar-connections:UseConnection",
+          "codestar-connections:GetConnection",
+          "codestar-connections:CreateConnection",
+          "codestar-connections:DeleteConnection",
+          "codestar-connections:ListConnections"
+        ]
+        Resource = "arn:aws:codestar-connections:us-east-2:450133579764:connection/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "s3:*"
         ]
         Resource = [
           "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          aws_s3_bucket.pipeline_artifacts.arn,
+          "${aws_s3_bucket.pipeline_artifacts.arn}",
+          "arn:aws:s3:::*",
+          "arn:aws:s3:::*/*",
           "arn:aws:s3:::${var.frontend_bucket_name}/*",
           "arn:aws:s3:::${var.frontend_bucket_name}",
           "arn:aws:s3:::${var.project_name}-*/*",
@@ -150,6 +164,31 @@ resource "aws_iam_role_policy" "codebuild" {
           "ssm:GetParameters"
         ]
         Resource = "arn:aws:ssm:*:*:parameter/${var.project_name}/${var.environment}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:BatchGetProjects",
+          "codebuild:CreateProject",
+          "codebuild:UpdateProject",
+          "codebuild:DeleteProject",
+          "codebuild:StartBuild",
+          "codebuild:StopBuild",
+          "codebuild:ListBuilds",
+          "codebuild:BatchGetBuilds"
+        ]
+        Resource = "arn:aws:codebuild:us-east-2:450133579764:project/${var.project_name}-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics"
+        ]
+        Resource = "*"
       }
     ]
   })
