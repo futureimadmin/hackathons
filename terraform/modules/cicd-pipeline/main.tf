@@ -73,7 +73,9 @@ resource "aws_iam_role_policy" "codebuild" {
           "arn:aws:s3:::${var.frontend_bucket_name}/*",
           "arn:aws:s3:::${var.frontend_bucket_name}",
           "arn:aws:s3:::${var.project_name}-*/*",
-          "arn:aws:s3:::${var.project_name}-*"
+          "arn:aws:s3:::${var.project_name}-*",
+          "arn:aws:s3:::retail-copilot-*/*",
+          "arn:aws:s3:::retail-copilot-*"
         ]
       },
       {
