@@ -266,8 +266,9 @@ module "dms" {
   ]
 }
 
-# CI/CD Pipeline
+# CI/CD Pipeline (only created when running locally, not from the pipeline itself)
 module "cicd_pipeline" {
+  count  = var.create_cicd_pipeline ? 1 : 0
   source = "./modules/cicd-pipeline"
   
   project_name              = var.project_name
@@ -414,20 +415,20 @@ output "frontend_website_url" {
   value       = module.frontend_bucket.website_url
 }
 
-# CI/CD Pipeline Outputs
+# CI/CD Pipeline Outputs (conditional)
 output "pipeline_name" {
   description = "CodePipeline name"
-  value       = module.cicd_pipeline.pipeline_name
+  value       = var.create_cicd_pipeline ? module.cicd_pipeline[0].pipeline_name : null
 }
 
 output "pipeline_url" {
   description = "CodePipeline console URL"
-  value       = module.cicd_pipeline.pipeline_url
+  value       = var.create_cicd_pipeline ? module.cicd_pipeline[0].pipeline_url : null
 }
 
 output "github_connection_arn" {
   description = "GitHub CodeStar connection ARN (requires manual approval)"
-  value       = module.cicd_pipeline.github_connection_arn
+  value       = var.create_cicd_pipeline ? module.cicd_pipeline[0].github_connection_arn : null
 }
 
 output "lambda_execution_role_arn" {

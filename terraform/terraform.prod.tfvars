@@ -9,3 +9,6 @@ vpc_cidr     = "10.1.0.0/16"
 github_repo   = "futureimadmin/hackathons"
 github_branch = "master"
 github_token  = "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"
+
+# CI/CD Pipeline Control
+create_cicd_pipeline = true  # Set to true for local deployment, false for pipeline execution

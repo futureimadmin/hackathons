@@ -34,9 +34,9 @@ phases:
       - echo "Planning Terraform changes..."
       - |
         if [ "$ENVIRONMENT" = "prod" ]; then
-          terraform plan -var-file="terraform.prod.tfvars" -out=tfplan
+          terraform plan -var-file="terraform.prod.tfvars" -var="create_cicd_pipeline=false" -out=tfplan
         else
-          terraform plan -var-file="terraform.dev.tfvars" -out=tfplan
+          terraform plan -var-file="terraform.dev.tfvars" -var="create_cicd_pipeline=false" -out=tfplan
         fi
       
       - echo "Applying Terraform changes..."

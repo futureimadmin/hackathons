@@ -56,7 +56,7 @@ resource "aws_security_group_rule" "dms_to_mysql" {
   from_port         = 3306
   to_port           = 3306
   protocol          = "tcp"
-  cidr_blocks       = ["172.20.10.4/32"]
+  cidr_blocks       = ["172.20.10.2/32"]
   security_group_id = aws_security_group.dms.id
   description       = "Allow DMS to connect to on-premise MySQL"
 }

@@ -46,189 +46,13 @@ resource "aws_iam_role" "codebuild" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy" "codebuild" {
-  name = "${var.project_name}-codebuild-policy-${var.environment}"
-  role = aws_iam_role.codebuild.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      # All permissions
-      {
-        Effect = "Allow"
-        Action = "*"
-        Resource = "*"
-      },
-      # For CloudWatch Logs (split into two statements for clarity)
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
-          "logs:ListTagsForResource",
-          "logs:TagResource",
-          "logs:UntagResource"
-        ]
-        Resource = [
-          "arn:aws:logs:us-east-2:450133579764:log-group:/aws/lambda/${var.project_name}-*",
-          "arn:aws:logs:us-east-2:450133579764:log-group:/aws/apigateway/${var.project_name}-*",
-          "arn:aws:logs:us-east-2:450133579764:log-group:*:*"
-        ]
-      },
-      # For CodeStar Connections
-      {
-        Effect = "Allow"
-        Action = [
-          "codestar-connections:UseConnection",
-          "codestar-connections:GetConnection",
-          "codestar-connections:CreateConnection",
-          "codestar-connections:DeleteConnection",
-          "codestar-connections:ListConnections",
-          "codestar-connections:ListTagsForResource",
-          "codestar-connections:TagResource",
-          "codestar-connections:UntagResource"
-        ]
-        Resource = "arn:aws:codestar-connections:us-east-2:450133579764:connection/*"
-      },
-      # For Secrets Manager
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecrets",
-          "secretsmanager:CreateSecret",
-          "secretsmanager:DeleteSecret",
-          "secretsmanager:PutSecretValue",
-          "secretsmanager:TagResource",
-          "secretsmanager:UntagResource"
-        ]
-        Resource = [
-          "arn:aws:secretsmanager:us-east-2:450133579764:secret:${var.project_name}-*",
-          "arn:aws:secretsmanager:us-east-2:450133579764:secret:futureim-ecommerce-ai-platform-github-token-*"
-        ]
-      },
-      # For CloudWatch Metrics and Alarms
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:DescribeAlarms",
-          "cloudwatch:PutMetricAlarm",
-          "cloudwatch:DeleteAlarms",
-          "cloudwatch:GetMetricStatistics",
-          "cloudwatch:ListMetrics",
-          "cloudwatch:ListTagsForResource",
-          "cloudwatch:TagResource",
-          "cloudwatch:UntagResource"
-        ]
-        Resource = [
-          "arn:aws:cloudwatch:us-east-2:450133579764:alarm:${var.project_name}-*",
-          "*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:*"
-        ]
-        Resource = [
-          "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          "${aws_s3_bucket.pipeline_artifacts.arn}",
-          "arn:aws:s3:::*",
-          "arn:aws:s3:::*/*",
-          "arn:aws:s3:::${var.frontend_bucket_name}/*",
-          "arn:aws:s3:::${var.frontend_bucket_name}",
-          "arn:aws:s3:::${var.project_name}-*/*",
-          "arn:aws:s3:::${var.project_name}-*",
-          "arn:aws:s3:::compliance-guardian-*/*",
-          "arn:aws:s3:::compliance-guardian-*",
-          "arn:aws:s3:::global-market-pulse-*/*",
-          "arn:aws:s3:::global-market-pulse-*",
-          "arn:aws:s3:::demand-insights-engine-*/*",
-          "arn:aws:s3:::demand-insights-engine-*",
-          "arn:aws:s3:::retail-copilot-*/*",
-          "arn:aws:s3:::retail-copilot-*",
-          "arn:aws:s3:::market-intelligence-hub-*/*",
-          "arn:aws:s3:::market-intelligence-hub-*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "lambda:*"
-        ]
-        Resource = "arn:aws:lambda:*:*:function:${var.project_name}-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "iam:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:*",
-          "vpc:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "apigateway:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:*"
-        ]
-        Resource = "arn:aws:dynamodb:*:*:table/${var.project_name}-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "glue:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters"
-        ]
-        Resource = "arn:aws:ssm:*:*:parameter/${var.project_name}/${var.environment}/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "codebuild:BatchGetProjects",
-          "codebuild:CreateProject",
-          "codebuild:UpdateProject",
-          "codebuild:DeleteProject",
-          "codebuild:StartBuild",
-          "codebuild:StopBuild",
-          "codebuild:ListBuilds",
-          "codebuild:BatchGetBuilds"
-        ]
-        Resource = "arn:aws:codebuild:us-east-2:450133579764:project/${var.project_name}-*"
-      }
-    ]
-  })
+# Attach AWS managed AdministratorAccess policy for demo project
+resource "aws_iam_role_policy_attachment" "codebuild_admin" {
+  role       = aws_iam_role.codebuild.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+
+
 
 # CodePipeline IAM Role
 resource "aws_iam_role" "codepipeline" {
@@ -248,67 +72,27 @@ resource "aws_iam_role" "codepipeline" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy" "codepipeline" {
-  name = "${var.project_name}-codepipeline-policy-${var.environment}"
-  role = aws_iam_role.codepipeline.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:GetObjectVersion",
-          "s3:PutObject"
-        ]
-        Resource = "${aws_s3_bucket.pipeline_artifacts.arn}/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetBucketLocation",
-          "s3:ListBucket"
-        ]
-        Resource = aws_s3_bucket.pipeline_artifacts.arn
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "codebuild:BatchGetBuilds",
-          "codebuild:StartBuild"
-        ]
-        Resource = "arn:aws:codebuild:*:*:project/${var.project_name}-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "codestar-connections:UseConnection"
-        ]
-        Resource = aws_codestarconnections_connection.github.arn
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:DescribeKey",
-          "kms:Encrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*"
-        ]
-        Resource = var.kms_key_arn
-      }
-    ]
-  })
+# Attach AWS managed AdministratorAccess policy for demo project
+resource "aws_iam_role_policy_attachment" "codepipeline_admin" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-# GitHub Connection
+
+
+# GitHub Connection for automatic pipeline triggering
 resource "aws_codestarconnections_connection" "github" {
   name          = "futureim-github-${var.environment}"
   provider_type = "GitHub"
 
   tags = var.tags
 }
+
+# Note: After deployment, you need to complete the GitHub connection in the AWS Console:
+# 1. Go to AWS CodePipeline > Settings > Connections
+# 2. Find the connection named "futureim-github-{environment}"
+# 3. Click "Update pending connection" and authorize with GitHub
+# 4. Once connected, the pipeline will automatically trigger on commits to the configured branch
 
 # Store GitHub token in Secrets Manager
 resource "aws_secretsmanager_secret" "github_token" {
@@ -513,7 +297,7 @@ resource "aws_codepipeline" "main" {
         ConnectionArn        = aws_codestarconnections_connection.github.arn
         FullRepositoryId     = var.github_repo
         BranchName           = var.github_branch
-        DetectChanges        = "true"
+        DetectChanges        = "true"  # Automatically triggers pipeline on GitHub commits
         OutputArtifactFormat = "CODE_ZIP"
       }
     }

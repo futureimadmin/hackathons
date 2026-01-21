@@ -43,6 +43,12 @@ variable "github_token" {
   default     = ""
 }
 
+variable "create_cicd_pipeline" {
+  description = "Whether to create the CI/CD pipeline (set to false when running from pipeline)"
+  type        = bool
+  default     = true
+}
+
 # DMS Configuration
 variable "dms_replication_instance_class" {
   description = "Instance class for DMS replication instance"
@@ -66,7 +72,7 @@ variable "dms_multi_az" {
 variable "mysql_server_name" {
   description = "MySQL server hostname or IP"
   type        = string
-  default     = "172.20.10.4"
+  default     = "172.20.10.2"
 }
 
 variable "mysql_port" {

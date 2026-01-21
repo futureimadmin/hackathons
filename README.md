@@ -12,9 +12,10 @@ Enterprise-grade cloud infrastructure for AI-powered eCommerce analytics platfor
 4. [Deployment Architecture](#deployment-architecture)
 5. [Prerequisites](#prerequisites)
 6. [Quick Start](#quick-start)
-7. [Configuration](#configuration)
-8. [Post-Deployment](#post-deployment)
-9. [Troubleshooting](#troubleshooting)
+7. [CloudFormation Stack Management](#cloudformation-stack-management)
+8. [Configuration](#configuration)
+9. [Post-Deployment](#post-deployment)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -344,7 +345,57 @@ CodePipeline Auto-Triggers (V2)
 
 ## Quick Start
 
-### Step 1: One-Time Prerequisites
+### 🚀 **Recommended: CloudFormation Stack Deployment**
+
+**Use this approach for complete stack management and easy cleanup.**
+
+#### **Step 1: Deploy Complete Environment**
+```powershell
+# Deploy dev environment with CloudFormation stack
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_github_token"
+
+# Deploy prod environment
+.\cloudformation\deploy-stack.ps1 -Environment prod -GitHubToken "your_github_token"
+```
+
+#### **Step 2: Check Stack Status**
+```powershell
+# Basic status
+.\cloudformation\stack-status.ps1 -Environment dev
+
+# Detailed status with resources and events
+.\cloudformation\stack-status.ps1 -Environment dev -Detailed
+```
+
+#### **Step 3: Complete GitHub Connection**
+1. Go to AWS Console → CodePipeline → Settings → Connections
+2. Find connection named `futureim-github-dev`
+3. Click "Update pending connection" and authorize with GitHub
+
+#### **Step 4: When You Need to Start Fresh**
+```powershell
+# Delete EVERYTHING (complete cleanup)
+.\cloudformation\delete-stack.ps1 -Environment dev
+
+# Recreate fresh environment
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_github_token"
+```
+
+**Benefits of CloudFormation Approach:**
+- ✅ **Complete resource management** - All resources tracked as single unit
+- ✅ **Easy cleanup** - Delete stack = delete ALL resources
+- ✅ **No orphaned resources** - CloudFormation tracks everything
+- ✅ **Perfect for development** - Create/delete environments easily
+- ✅ **No prerequisites** - All Terraform dependencies included automatically
+- ✅ **One-step deployment** - No need for separate setup scripts
+
+---
+
+### 🔧 **Alternative: Traditional Terraform Deployment**
+
+**Use this if you prefer direct Terraform management.**
+
+### Step 1: One-Time Prerequisites (Terraform Only)
 
 These create resources that Terraform depends on. Run these scripts from the `terraform/` directory:
 
@@ -370,7 +421,7 @@ cd terraform
 
 ---
 
-### Step 2: Configure Variables
+### Step 2: Configure Variables (Terraform Only)
 
 Edit `terraform/terraform.dev.tfvars`:
 
@@ -391,7 +442,7 @@ mysql_password_secret_arn = "arn:aws:secretsmanager:us-east-2:450133579764:secre
 
 ---
 
-### Step 3: Deploy Infrastructure
+### Step 3: Deploy Infrastructure (Terraform Only)
 
 ```powershell
 # Initialize Terraform
@@ -408,7 +459,7 @@ terraform apply -var-file="terraform.dev.tfvars"
 
 ---
 
-### Step 4: Post-Deployment Configuration
+### Step 4: Post-Deployment Configuration (Both Methods)
 
 #### Activate GitHub Connection
 1. Go to AWS Console → Developer Tools → Connections
@@ -432,6 +483,148 @@ Or use AWS Console: DMS → Database migration tasks → Select task → Actions
 
 ---
 
+## CloudFormation Stack Management
+
+### 📋 **Available CloudFormation Scripts**
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `deploy-stack.ps1` | Deploy complete environment | Initial setup, updates, recreating environment |
+| `delete-stack.ps1` | Delete complete environment | Cleanup, starting fresh, cost savings |
+| `stack-status.ps1` | Check stack status | Monitoring, troubleshooting, resource verification |
+
+### 🚀 **Deployment Scenarios**
+
+#### **Scenario 1: First Time Setup**
+```powershell
+# Deploy complete dev environment
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+
+# Check deployment status
+.\cloudformation\stack-status.ps1 -Environment dev -Detailed
+
+# Complete GitHub connection (one-time)
+# AWS Console → CodePipeline → Settings → Connections → Authorize
+```
+
+#### **Scenario 2: Daily Development**
+```powershell
+# Environment already exists - just develop and commit
+git add .
+git commit -m "New feature"
+git push origin master
+
+# Pipeline auto-triggers and deploys changes
+# Monitor: .\cloudformation\stack-status.ps1 -Environment dev
+```
+
+#### **Scenario 3: Clean Slate (Start Fresh)**
+```powershell
+# Delete everything
+.\cloudformation\delete-stack.ps1 -Environment dev
+
+# Recreate fresh environment
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+```
+
+#### **Scenario 4: Production Deployment**
+```powershell
+# Deploy to production
+.\cloudformation\deploy-stack.ps1 -Environment prod -GitHubToken "your_token"
+
+# Verify production deployment
+.\cloudformation\stack-status.ps1 -Environment prod -Detailed
+```
+
+#### **Scenario 5: Cost Optimization**
+```powershell
+# Delete dev environment when not in use (saves costs)
+.\cloudformation\delete-stack.ps1 -Environment dev
+
+# Recreate when needed
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+```
+
+### 🔧 **Advanced Usage**
+
+#### **Custom Parameters**
+```powershell
+# Deploy with custom settings
+.\cloudformation\deploy-stack.ps1 `
+  -Environment dev `
+  -GitHubToken "your_token" `
+  -ProjectName "my-custom-project" `
+  -VpcCidr "172.16.0.0/16" `
+  -MySQLServerIP "172.20.10.2" `
+  -Region "us-west-2"
+```
+
+#### **Force Delete (Skip Confirmation)**
+```powershell
+# Delete without confirmation prompt
+.\cloudformation\delete-stack.ps1 -Environment dev -Force
+```
+
+#### **Monitor Stack Events**
+```powershell
+# Watch stack deployment in real-time
+.\cloudformation\stack-status.ps1 -Environment dev -Detailed
+
+# Check specific resources
+aws cloudformation list-stack-resources --stack-name futureim-ecommerce-ai-platform-dev
+```
+
+### 🎯 **When to Use Each Approach**
+
+#### **Use CloudFormation When:**
+- ✅ You want complete resource management
+- ✅ You need easy environment cleanup
+- ✅ You're doing development/testing
+- ✅ You want to avoid orphaned resources
+- ✅ You need consistent environment recreation
+- ✅ You want to skip Terraform prerequisite scripts
+- ✅ You prefer one-command deployment
+
+#### **Use Direct Terraform When:**
+- ✅ You need fine-grained control
+- ✅ You're integrating with existing Terraform workflows
+- ✅ You want to manage state files directly
+- ✅ You're doing infrastructure-as-code development
+
+### 🛠️ **Troubleshooting CloudFormation**
+
+#### **Stack Creation Failed**
+```powershell
+# Check detailed status
+.\cloudformation\stack-status.ps1 -Environment dev -Detailed
+
+# View events in AWS Console
+# CloudFormation → Stacks → [StackName] → Events
+```
+
+#### **Stack Deletion Failed**
+```powershell
+# Check for resources preventing deletion
+aws cloudformation describe-stack-resources --stack-name futureim-ecommerce-ai-platform-dev
+
+# Manually empty S3 buckets if needed
+aws s3 rm s3://bucket-name --recursive
+
+# Retry deletion
+.\cloudformation\delete-stack.ps1 -Environment dev -Force
+```
+
+#### **GitHub Connection Issues**
+```powershell
+# Deploy stack first
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+
+# Then manually complete connection in AWS Console
+# CodePipeline → Settings → Connections → Update pending connection
+```
+
+---
+
 ## Configuration
 
 ### Environment Variables
@@ -447,7 +640,41 @@ Or use AWS Console: DMS → Database migration tasks → Select task → Actions
 | `github_token` | GitHub PAT | github_pat_... |
 | `mysql_password_secret_arn` | Secret ARN | arn:aws:secretsmanager:... |
 
-### DMS Configuration
+### MySQL Configuration
+
+**Current Settings:**
+- **Host**: 172.20.10.2
+- **Port**: 3306
+- **User**: dms_remote
+- **Database**: ecommerce
+
+**Security Note**: We use a dedicated `dms_remote` user with minimal privileges (not root) for better security.
+
+#### **Updating MySQL IP Address**
+
+If your MySQL server IP changes, use the automated update script:
+
+```powershell
+# Update IP address across all configurations
+.\update-mysql-ip.ps1 -NewMySQLIP "172.20.10.3" -Environment dev
+```
+
+This script updates:
+- ✅ Terraform variables
+- ✅ CloudFormation stack parameters  
+- ✅ Security group rules
+- ✅ DMS endpoint configuration
+
+**Manual MySQL User Setup:**
+```sql
+-- Connect to MySQL as root and create DMS user
+CREATE USER 'dms_remote'@'172.20.10.2' IDENTIFIED BY 'secure_password';
+GRANT REPLICATION SLAVE ON *.* TO 'dms_remote'@'172.20.10.2';
+GRANT SELECT ON ecommerce.* TO 'dms_remote'@'172.20.10.2';
+FLUSH PRIVILEGES;
+```
+
+See `docs/deployment/MYSQL_DMS_USER_SETUP.md` for detailed setup instructions.
 
 Located in `terraform/terraform.dev.tfvars`:
 
@@ -625,6 +852,58 @@ Examples:
 6. Step Functions for orchestration
 7. EventBridge for event-driven architecture
 8. SageMaker for ML model deployment
+
+---
+
+## Quick Reference
+
+### 🚀 **Most Common Commands**
+
+```powershell
+# Deploy dev environment
+.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+
+# Check status
+.\cloudformation\stack-status.ps1 -Environment dev
+
+# Delete environment (save costs)
+.\cloudformation\delete-stack.ps1 -Environment dev
+
+# Update MySQL IP
+.\update-mysql-ip.ps1 -NewMySQLIP "172.20.10.2" -Environment dev
+```
+
+### 📋 **File Structure**
+
+```
+├── cloudformation/                 # CloudFormation stack management
+│   ├── deploy-stack.ps1           # Deploy complete environment
+│   ├── delete-stack.ps1           # Delete complete environment
+│   ├── stack-status.ps1           # Check stack status
+│   └── ecommerce-ai-platform-stack.yaml  # CloudFormation template
+├── terraform/                     # Terraform infrastructure
+│   ├── main.tf                    # Main configuration
+│   ├── variables.tf               # Variable definitions
+│   └── modules/                   # Reusable modules
+├── docs/deployment/               # Deployment guides
+│   ├── MYSQL_DMS_USER_SETUP.md   # MySQL security setup
+│   └── PIPELINE_AUTO_TRIGGER_SETUP.md  # CI/CD configuration
+├── update-mysql-ip.ps1           # MySQL IP update script
+└── README.md                     # This file
+```
+
+### 🎯 **Decision Matrix: CloudFormation vs Terraform**
+
+| Need | CloudFormation | Direct Terraform |
+|------|----------------|------------------|
+| Easy cleanup | ✅ Perfect | ❌ Manual cleanup |
+| Dev/test environments | ✅ Ideal | ⚠️ Complex |
+| Production stability | ✅ Good | ✅ Excellent |
+| Fine-grained control | ⚠️ Limited | ✅ Full control |
+| Learning curve | ✅ Simple | ⚠️ Moderate |
+| Resource tracking | ✅ Automatic | ⚠️ Manual |
+
+**Recommendation**: Use CloudFormation for development and testing, consider direct Terraform for production.
 
 ---
 
