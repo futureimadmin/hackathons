@@ -5,6 +5,11 @@
 resource "aws_s3_bucket" "pipeline_artifacts" {
   bucket = "${var.project_name}-pipeline-artifacts-${var.environment}"
 
+  # Prevent accidental deletion of bucket with build artifacts
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = merge(var.tags, {
     Name = "${var.project_name}-pipeline-artifacts-${var.environment}"
   })
@@ -82,7 +87,7 @@ resource "aws_iam_role_policy_attachment" "codepipeline_admin" {
 
 # GitHub Connection for automatic pipeline triggering
 resource "aws_codestarconnections_connection" "github" {
-  name          = "futureim-github-${var.environment}"
+  name          = "github-hackathons"
   provider_type = "GitHub"
 
   tags = var.tags
@@ -90,16 +95,25 @@ resource "aws_codestarconnections_connection" "github" {
 
 # Note: After deployment, you need to complete the GitHub connection in the AWS Console:
 # 1. Go to AWS CodePipeline > Settings > Connections
-# 2. Find the connection named "futureim-github-{environment}"
+# 2. Find the connection named "github-hackathons"
 # 3. Click "Update pending connection" and authorize with GitHub
 # 4. Once connected, the pipeline will automatically trigger on commits to the configured branch
 
 # Store GitHub token in Secrets Manager
+# Handle existing secrets gracefully to avoid conflicts
 resource "aws_secretsmanager_secret" "github_token" {
   name = "${var.project_name}-github-token-${var.environment}"
   kms_key_id = var.kms_key_arn
+  
+  # Handle existing secrets that might be scheduled for deletion
+  recovery_window_in_days = 0  # Allow immediate deletion if needed
 
   tags = var.tags
+  
+  lifecycle {
+    # Ignore changes to recovery window to prevent conflicts
+    ignore_changes = [recovery_window_in_days]
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "github_token" {
@@ -111,40 +125,8 @@ resource "aws_secretsmanager_secret_version" "github_token" {
   }
 }
 
-# CodeBuild Project - Infrastructure
-resource "aws_codebuild_project" "infrastructure" {
-  name          = "${var.project_name}-infrastructure-${var.environment}"
-  service_role  = aws_iam_role.codebuild.arn
-
-  artifacts {
-    type = "CODEPIPELINE"
-  }
-
-  environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/standard:7.0"
-    type                        = "LINUX_CONTAINER"
-    image_pull_credentials_type = "CODEBUILD"
-    privileged_mode             = false
-
-    environment_variable {
-      name  = "ENVIRONMENT"
-      value = var.environment
-    }
-
-    environment_variable {
-      name  = "AWS_REGION"
-      value = var.aws_region
-    }
-  }
-
-  source {
-    type      = "CODEPIPELINE"
-    buildspec = "buildspecs/infrastructure-buildspec.yml"
-  }
-
-  tags = var.tags
-}
+# Infrastructure step removed - Terraform is run locally, not in pipeline
+# This eliminates the redundancy and circular dependency issues
 
 # CodeBuild Project - Java Lambda (Auth Service)
 resource "aws_codebuild_project" "java_lambda" {
@@ -304,24 +286,6 @@ resource "aws_codepipeline" "main" {
   }
 
   stage {
-    name = "Infrastructure"
-
-    action {
-      name             = "DeployInfrastructure"
-      category         = "Build"
-      owner            = "AWS"
-      provider         = "CodeBuild"
-      version          = "1"
-      input_artifacts  = ["source_output"]
-      output_artifacts = ["infrastructure_output"]
-
-      configuration = {
-        ProjectName = aws_codebuild_project.infrastructure.name
-      }
-    }
-  }
-
-  stage {
     name = "BuildLambdas"
 
     action {
@@ -364,12 +328,11 @@ resource "aws_codepipeline" "main" {
       owner            = "AWS"
       provider         = "CodeBuild"
       version          = "1"
-      input_artifacts  = ["source_output", "infrastructure_output"]
+      input_artifacts  = ["source_output"]
       output_artifacts = ["frontend_output"]
 
       configuration = {
-        ProjectName   = aws_codebuild_project.frontend.name
-        PrimarySource = "source_output"
+        ProjectName = aws_codebuild_project.frontend.name
       }
     }
   }

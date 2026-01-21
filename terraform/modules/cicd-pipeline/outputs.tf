@@ -33,7 +33,6 @@ output "github_connection_status" {
 output "codebuild_projects" {
   description = "CodeBuild project names"
   value = {
-    infrastructure  = aws_codebuild_project.infrastructure.name
     java_lambda     = aws_codebuild_project.java_lambda.name
     python_lambdas  = aws_codebuild_project.python_lambdas.name
     frontend        = aws_codebuild_project.frontend.name
