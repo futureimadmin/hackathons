@@ -1,10 +1,12 @@
 .kiro
 .vscode
 .idea
+.pytest_cache
 auth-service/target
 frontend/dist
 frontend/node_modules
 terraform/.terraform
 terraform/.terraform.lock.hcl
 terraform/modules/api-gateway/lambda/node_modules
+terraform/modules/api-gateway/lambda/authorizer.zip
 terraform/tests/__pycache__
