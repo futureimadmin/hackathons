@@ -37,6 +37,9 @@ phases:
             --zip-file fileb://target/auth-service.jar \
             --region "$AWS_DEFAULT_REGION"
           
+          echo "Waiting for function update to complete..."
+          aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION_NAME" --region "$AWS_DEFAULT_REGION"
+          
           echo "Updating function configuration..."
           aws lambda update-function-configuration \
             --function-name "$LAMBDA_FUNCTION_NAME" \

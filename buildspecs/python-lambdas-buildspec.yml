@@ -29,8 +29,24 @@ phases:
         fi
       - echo "Deploying Analytics Service..."
       - cd analytics-service/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r analytics-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r analytics-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh analytics-lambda.zip
+      - |
+        SIZE=$(stat -f%z analytics-lambda.zip 2>/dev/null || stat -c%s analytics-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-analytics-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
@@ -56,8 +72,24 @@ phases:
       - cd ../..
       - echo "Deploying Market Intelligence Hub..."
       - cd ai-systems/market-intelligence-hub/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r market-intelligence-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r market-intelligence-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh market-intelligence-lambda.zip
+      - |
+        SIZE=$(stat -f%z market-intelligence-lambda.zip 2>/dev/null || stat -c%s market-intelligence-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-market-intelligence-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
@@ -83,8 +115,24 @@ phases:
       - cd ../../..
       - echo "Deploying Demand Insights Engine..."
       - cd ai-systems/demand-insights-engine/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r demand-insights-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r demand-insights-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh demand-insights-lambda.zip
+      - |
+        SIZE=$(stat -f%z demand-insights-lambda.zip 2>/dev/null || stat -c%s demand-insights-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-demand-insights-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
@@ -110,8 +158,24 @@ phases:
       - cd ../../..
       - echo "Deploying Compliance Guardian..."
       - cd ai-systems/compliance-guardian/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r compliance-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r compliance-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh compliance-lambda.zip
+      - |
+        SIZE=$(stat -f%z compliance-lambda.zip 2>/dev/null || stat -c%s compliance-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-compliance-guardian-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
@@ -137,8 +201,24 @@ phases:
       - cd ../../..
       - echo "Deploying Retail Copilot..."
       - cd ai-systems/retail-copilot/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r retail-copilot-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r retail-copilot-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh retail-copilot-lambda.zip
+      - |
+        SIZE=$(stat -f%z retail-copilot-lambda.zip 2>/dev/null || stat -c%s retail-copilot-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-retail-copilot-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
@@ -164,8 +244,24 @@ phases:
       - cd ../../..
       - echo "Deploying Global Market Pulse..."
       - cd ai-systems/global-market-pulse/src
-      - pip install -r ../requirements.txt -t . --quiet
-      - zip -r global-market-pulse-lambda.zip . -q
+      - echo "Installing dependencies with size optimization..."
+      - pip install -r ../requirements.txt -t . --quiet --no-cache-dir --compile
+      - echo "Removing unnecessary files to reduce size..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete 2>/dev/null || true
+      - find . -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - zip -r global-market-pulse-lambda.zip . -q -x "*.pyc" "*/__pycache__/*" "*.dist-info/*"
+      - echo "Package size check..."
+      - ls -lh global-market-pulse-lambda.zip
+      - |
+        SIZE=$(stat -f%z global-market-pulse-lambda.zip 2>/dev/null || stat -c%s global-market-pulse-lambda.zip)
+        if [ $SIZE -gt 52428800 ]; then
+          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
+          exit 1
+        fi
+        echo "Package size OK: $SIZE bytes"
       - |
         FUNCTION_NAME="${PROJECT_NAME}-global-market-pulse-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
