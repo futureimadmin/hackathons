@@ -1,7 +1,5 @@
 version: 0.2
 
-# Buildspec for building and deploying Python Lambdas
-
 phases:
   install:
     runtime-versions:
@@ -20,19 +18,15 @@ phases:
     commands:
       - echo "Building and deploying Python Lambda functions..."
       - echo "Checking environment variables..."
-      - echo "PROJECT_NAME: $PROJECT_NAME"
-      - echo "ENVIRONMENT: $ENVIRONMENT"
-      - echo "LAMBDA_ROLE_ARN: $LAMBDA_ROLE_ARN"
-      - echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
-      
-      # Check if LAMBDA_ROLE_ARN is set
+      - echo "PROJECT_NAME - $PROJECT_NAME"
+      - echo "ENVIRONMENT - $ENVIRONMENT"
+      - echo "LAMBDA_ROLE_ARN - $LAMBDA_ROLE_ARN"
+      - echo "AWS_DEFAULT_REGION - $AWS_DEFAULT_REGION"
       - |
         if [ -z "$LAMBDA_ROLE_ARN" ]; then
           echo "ERROR: LAMBDA_ROLE_ARN environment variable is not set"
           exit 1
         fi
-      
-      # Analytics Service
       - echo "Deploying Analytics Service..."
       - cd analytics-service/src
       - pip install -r ../requirements.txt -t . --quiet
@@ -60,8 +54,6 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../..
-      
-      # Market Intelligence Hub
       - echo "Deploying Market Intelligence Hub..."
       - cd ai-systems/market-intelligence-hub/src
       - pip install -r ../requirements.txt -t . --quiet
@@ -89,8 +81,6 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      # Demand Insights Engine
       - echo "Deploying Demand Insights Engine..."
       - cd ai-systems/demand-insights-engine/src
       - pip install -r ../requirements.txt -t . --quiet
@@ -118,8 +108,6 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      # Compliance Guardian
       - echo "Deploying Compliance Guardian..."
       - cd ai-systems/compliance-guardian/src
       - pip install -r ../requirements.txt -t . --quiet
@@ -147,8 +135,6 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      # Retail Copilot
       - echo "Deploying Retail Copilot..."
       - cd ai-systems/retail-copilot/src
       - pip install -r ../requirements.txt -t . --quiet
@@ -176,8 +162,6 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      # Global Market Pulse
       - echo "Deploying Global Market Pulse..."
       - cd ai-systems/global-market-pulse/src
       - pip install -r ../requirements.txt -t . --quiet
