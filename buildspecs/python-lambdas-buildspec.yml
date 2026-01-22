@@ -93,35 +93,43 @@ phases:
             --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
             --region "$AWS_DEFAULT_REGION"
         fi
-      - echo "Deploying Demand Insights Engine..."
-      - cd ai-systems/demand-insights-engine/src
-      - pip install boto3 pandas numpy scikit-learn pyathena joblib scipy -t . --quiet --no-cache-dir
-      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-      - find . -name "*.pyc" -delete 2>/dev/null || true
-      - zip -r demand-insights-lambda.zip . -q
+      - echo "Creating placeholder for Demand Insights Engine..."
+      - |
+        cat > demand_insights_placeholder.py << 'EOF'
+        import json
+        def lambda_handler(event, context):
+            return {
+                'statusCode': 501,
+                'body': json.dumps({
+                    'message': 'Demand Insights Engine requires container deployment',
+                    'service': 'demand-insights-engine',
+                    'status': 'requires_container_deployment'
+                })
+            }
+        EOF
+      - zip -r demand-insights-placeholder.zip demand_insights_placeholder.py
       - |
         FUNCTION_NAME="${PROJECT_NAME}-demand-insights-${ENVIRONMENT}"
-        echo "Processing function: $FUNCTION_NAME"
+        echo "Processing placeholder function: $FUNCTION_NAME"
         if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
-          echo "Updating Demand Insights Lambda..."
+          echo "Updating Demand Insights Lambda with placeholder..."
           aws lambda update-function-code \
             --function-name "$FUNCTION_NAME" \
-            --zip-file fileb://demand-insights-lambda.zip \
+            --zip-file fileb://demand-insights-placeholder.zip \
             --region "$AWS_DEFAULT_REGION"
         else
-          echo "Creating Demand Insights Lambda..."
+          echo "Creating Demand Insights Lambda placeholder..."
           aws lambda create-function \
             --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
             --role "$LAMBDA_ROLE_ARN" \
-            --handler handler.lambda_handler \
-            --zip-file fileb://demand-insights-lambda.zip \
+            --handler demand_insights_placeholder.lambda_handler \
+            --zip-file fileb://demand-insights-placeholder.zip \
             --timeout 60 \
-            --memory-size 1024 \
+            --memory-size 512 \
             --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
             --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../../..
       - echo "Creating placeholder for Compliance Guardian..."
       - |
         cat > compliance_placeholder.py << 'EOF'
@@ -221,8 +229,9 @@ phases:
   post_build:
     commands:
       - echo "Python Lambdas deployment completed"
-      - echo "Market Intelligence Hub and Compliance Guardian deployed as placeholders"
-      - echo "These services require container deployment due to large ML dependencies"
+      - echo "Successfully deployed - Analytics Service, Retail Copilot, Global Market Pulse"
+      - echo "Placeholders deployed - Market Intelligence Hub, Demand Insights Engine, Compliance Guardian"
+      - echo "Heavy ML services require container deployment due to large dependencies"
 
 artifacts:
   files:
