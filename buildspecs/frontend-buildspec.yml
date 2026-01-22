@@ -47,16 +47,20 @@ phases:
       
       - echo "Invalidating CloudFront cache (if exists)..."
       - |
+        echo "Checking for CloudFront distribution..."
         DISTRIBUTION_ID=$(aws cloudfront list-distributions \
           --query "DistributionList.Items[?Origins.Items[?DomainName=='$FRONTEND_BUCKET.s3.amazonaws.com']].Id" \
-          --output text)
-        if [ ! -z "$DISTRIBUTION_ID" ]; then
+          --output text 2>/dev/null || echo "")
+        
+        if [ ! -z "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ] && [ "$DISTRIBUTION_ID" != "null" ]; then
           echo "Found CloudFront distribution: $DISTRIBUTION_ID"
+          echo "Creating cache invalidation..."
           aws cloudfront create-invalidation \
-            --distribution-id $DISTRIBUTION_ID \
-            --paths "/*"
+            --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/*" || echo "Invalidation failed, but continuing..."
         else
-          echo "No CloudFront distribution found"
+          echo "No CloudFront distribution found for bucket: $FRONTEND_BUCKET"
+          echo "Frontend will be served directly from S3"
         fi
 
   post_build:
