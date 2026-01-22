@@ -27,7 +27,6 @@ phases:
           echo "ERROR: LAMBDA_ROLE_ARN environment variable is not set"
           exit 1
         fi
-      
       - echo "Deploying Analytics Service..."
       - cd analytics-service/src
       - pip install -r ../requirements.txt -t . --quiet --no-cache-dir
@@ -57,8 +56,7 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../..
-      
-      - echo "Creating placeholder for Market Intelligence Hub (TensorFlow too large for Lambda)..."
+      - echo "Creating placeholder for Market Intelligence Hub..."
       - |
         cat > market_intelligence_placeholder.py << 'EOF'
         import json
@@ -66,19 +64,16 @@ phases:
             return {
                 'statusCode': 501,
                 'body': json.dumps({
-                    'message': 'Market Intelligence Hub requires container deployment due to TensorFlow dependency',
+                    'message': 'Market Intelligence Hub requires container deployment',
                     'service': 'market-intelligence-hub',
-                    'status': 'requires_container_deployment',
-                    'dependencies': ['tensorflow', 'prophet', 'statsmodels']
+                    'status': 'requires_container_deployment'
                 })
             }
         EOF
-        
-        zip -r market-intelligence-placeholder.zip market_intelligence_placeholder.py
-        
+      - zip -r market-intelligence-placeholder.zip market_intelligence_placeholder.py
+      - |
         FUNCTION_NAME="${PROJECT_NAME}-market-intelligence-${ENVIRONMENT}"
         echo "Processing placeholder function: $FUNCTION_NAME"
-        
         if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Market Intelligence Lambda with placeholder..."
           aws lambda update-function-code \
@@ -98,8 +93,7 @@ phases:
             --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
             --region "$AWS_DEFAULT_REGION"
         fi
-      
-      - echo "Deploying Demand Insights Engine (lightweight ML)..."
+      - echo "Deploying Demand Insights Engine..."
       - cd ai-systems/demand-insights-engine/src
       - pip install boto3 pandas numpy scikit-learn pyathena joblib scipy -t . --quiet --no-cache-dir
       - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -128,8 +122,7 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      - echo "Creating placeholder for Compliance Guardian (PyTorch/Transformers too large for Lambda)..."
+      - echo "Creating placeholder for Compliance Guardian..."
       - |
         cat > compliance_placeholder.py << 'EOF'
         import json
@@ -137,19 +130,16 @@ phases:
             return {
                 'statusCode': 501,
                 'body': json.dumps({
-                    'message': 'Compliance Guardian requires container deployment due to PyTorch/Transformers dependencies',
+                    'message': 'Compliance Guardian requires container deployment',
                     'service': 'compliance-guardian',
-                    'status': 'requires_container_deployment',
-                    'dependencies': ['torch', 'transformers', 'xgboost']
+                    'status': 'requires_container_deployment'
                 })
             }
         EOF
-        
-        zip -r compliance-placeholder.zip compliance_placeholder.py
-        
+      - zip -r compliance-placeholder.zip compliance_placeholder.py
+      - |
         FUNCTION_NAME="${PROJECT_NAME}-compliance-guardian-${ENVIRONMENT}"
         echo "Processing placeholder function: $FUNCTION_NAME"
-        
         if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Compliance Guardian Lambda with placeholder..."
           aws lambda update-function-code \
@@ -169,8 +159,7 @@ phases:
             --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
             --region "$AWS_DEFAULT_REGION"
         fi
-      
-      - echo "Deploying Retail Copilot (lightweight)..."
+      - echo "Deploying Retail Copilot..."
       - cd ai-systems/retail-copilot/src
       - pip install -r ../requirements.txt -t . --quiet --no-cache-dir
       - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -199,8 +188,7 @@ phases:
             --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../../..
-      
-      - echo "Deploying Global Market Pulse (lightweight)..."
+      - echo "Deploying Global Market Pulse..."
       - cd ai-systems/global-market-pulse/src
       - pip install -r ../requirements.txt -t . --quiet --no-cache-dir
       - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -233,7 +221,7 @@ phases:
   post_build:
     commands:
       - echo "Python Lambdas deployment completed"
-      - echo "NOTE: Market Intelligence Hub and Compliance Guardian deployed as placeholders"
+      - echo "Market Intelligence Hub and Compliance Guardian deployed as placeholders"
       - echo "These services require container deployment due to large ML dependencies"
 
 artifacts:
