@@ -150,6 +150,11 @@ resource "aws_codebuild_project" "java_lambda" {
     }
 
     environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
+    }
+
+    environment_variable {
       name  = "LAMBDA_FUNCTION_NAME"
       value = "${var.project_name}-auth-${var.environment}"
     }
@@ -190,6 +195,11 @@ resource "aws_codebuild_project" "python_lambdas" {
     }
 
     environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
+    }
+
+    environment_variable {
       name  = "PROJECT_NAME"
       value = var.project_name
     }
@@ -227,6 +237,11 @@ resource "aws_codebuild_project" "frontend" {
     environment_variable {
       name  = "ENVIRONMENT"
       value = var.environment
+    }
+
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
     }
 
     environment_variable {

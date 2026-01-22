@@ -19,162 +19,192 @@ phases:
   build:
     commands:
       - echo "Building and deploying Python Lambda functions..."
+      - echo "Checking environment variables..."
+      - echo "PROJECT_NAME: $PROJECT_NAME"
+      - echo "ENVIRONMENT: $ENVIRONMENT"
+      - echo "LAMBDA_ROLE_ARN: $LAMBDA_ROLE_ARN"
+      - echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
+      
+      # Check if LAMBDA_ROLE_ARN is set
+      - |
+        if [ -z "$LAMBDA_ROLE_ARN" ]; then
+          echo "ERROR: LAMBDA_ROLE_ARN environment variable is not set"
+          exit 1
+        fi
       
       # Analytics Service
       - echo "Deploying Analytics Service..."
       - cd analytics-service/src
-      - pip install -r ../requirements.txt -t .
-      - zip -r analytics-lambda.zip .
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r analytics-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-analytics-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Analytics Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://analytics-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://analytics-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Analytics Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://analytics-lambda.zip \
             --timeout 60 \
             --memory-size 512 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
       - cd ../..
       
       # Market Intelligence Hub
       - echo "Deploying Market Intelligence Hub..."
-      - cd ai-systems/market-intelligence-hub
-      - pip install -r requirements.txt -t .
-      - zip -r market-intelligence-lambda.zip .
+      - cd ai-systems/market-intelligence-hub/src
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r market-intelligence-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-market-intelligence-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Market Intelligence Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://market-intelligence-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://market-intelligence-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Market Intelligence Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://market-intelligence-lambda.zip \
             --timeout 60 \
             --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../..
+      - cd ../../..
       
       # Demand Insights Engine
       - echo "Deploying Demand Insights Engine..."
-      - cd ai-systems/demand-insights-engine
-      - pip install -r requirements.txt -t .
-      - zip -r demand-insights-lambda.zip .
+      - cd ai-systems/demand-insights-engine/src
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r demand-insights-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-demand-insights-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Demand Insights Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://demand-insights-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://demand-insights-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Demand Insights Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://demand-insights-lambda.zip \
             --timeout 60 \
             --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../..
+      - cd ../../..
       
       # Compliance Guardian
       - echo "Deploying Compliance Guardian..."
-      - cd ai-systems/compliance-guardian
-      - pip install -r requirements.txt -t .
-      - zip -r compliance-lambda.zip .
+      - cd ai-systems/compliance-guardian/src
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r compliance-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-compliance-guardian-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Compliance Guardian Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://compliance-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://compliance-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Compliance Guardian Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://compliance-lambda.zip \
             --timeout 60 \
             --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../..
+      - cd ../../..
       
       # Retail Copilot
       - echo "Deploying Retail Copilot..."
-      - cd ai-systems/retail-copilot
-      - pip install -r requirements.txt -t .
-      - zip -r retail-copilot-lambda.zip .
+      - cd ai-systems/retail-copilot/src
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r retail-copilot-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-retail-copilot-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Retail Copilot Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://retail-copilot-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://retail-copilot-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Retail Copilot Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://retail-copilot-lambda.zip \
             --timeout 60 \
             --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../..
+      - cd ../../..
       
       # Global Market Pulse
       - echo "Deploying Global Market Pulse..."
-      - cd ai-systems/global-market-pulse
-      - pip install -r requirements.txt -t .
-      - zip -r global-market-pulse-lambda.zip .
+      - cd ai-systems/global-market-pulse/src
+      - pip install -r ../requirements.txt -t . --quiet
+      - zip -r global-market-pulse-lambda.zip . -q
       - |
         FUNCTION_NAME="${PROJECT_NAME}-global-market-pulse-${ENVIRONMENT}"
-        if aws lambda get-function --function-name $FUNCTION_NAME 2>/dev/null; then
+        echo "Processing function: $FUNCTION_NAME"
+        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Updating Global Market Pulse Lambda..."
           aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://global-market-pulse-lambda.zip
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://global-market-pulse-lambda.zip \
+            --region "$AWS_DEFAULT_REGION"
         else
           echo "Creating Global Market Pulse Lambda..."
           aws lambda create-function \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --runtime python3.11 \
-            --role $LAMBDA_ROLE_ARN \
-            --handler lambda_function.lambda_handler \
+            --role "$LAMBDA_ROLE_ARN" \
+            --handler handler.lambda_handler \
             --zip-file fileb://global-market-pulse-lambda.zip \
             --timeout 60 \
             --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}"
+            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+            --region "$AWS_DEFAULT_REGION"
         fi
-      - cd ../..
+      - cd ../../..
 
   post_build:
     commands:
