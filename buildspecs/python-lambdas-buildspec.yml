@@ -85,32 +85,60 @@ phases:
       - ls -lh market-intelligence-lambda.zip
       - |
         SIZE=$(stat -f%z market-intelligence-lambda.zip 2>/dev/null || stat -c%s market-intelligence-lambda.zip)
-        if [ $SIZE -gt 52428800 ]; then
-          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
-          exit 1
-        fi
-        echo "Package size OK: $SIZE bytes"
-      - |
+        echo "Package size: $SIZE bytes"
+        
         FUNCTION_NAME="${PROJECT_NAME}-market-intelligence-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
-        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
-          echo "Updating Market Intelligence Lambda..."
-          aws lambda update-function-code \
-            --function-name "$FUNCTION_NAME" \
-            --zip-file fileb://market-intelligence-lambda.zip \
-            --region "$AWS_DEFAULT_REGION"
+        
+        if [ $SIZE -gt 52428800 ]; then
+          echo "Package too large for direct upload. Using S3 deployment..."
+          
+          # Upload to S3
+          S3_BUCKET="${PROJECT_NAME}-pipeline-artifacts-${ENVIRONMENT}"
+          S3_KEY="lambda-packages/market-intelligence-lambda.zip"
+          aws s3 cp market-intelligence-lambda.zip s3://$S3_BUCKET/$S3_KEY --region "$AWS_DEFAULT_REGION"
+          
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Market Intelligence Lambda from S3..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --s3-bucket "$S3_BUCKET" \
+              --s3-key "$S3_KEY" \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Market Intelligence Lambda from S3..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --code S3Bucket="$S3_BUCKET",S3Key="$S3_KEY" \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         else
-          echo "Creating Market Intelligence Lambda..."
-          aws lambda create-function \
-            --function-name "$FUNCTION_NAME" \
-            --runtime python3.11 \
-            --role "$LAMBDA_ROLE_ARN" \
-            --handler handler.lambda_handler \
-            --zip-file fileb://market-intelligence-lambda.zip \
-            --timeout 60 \
-            --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
-            --region "$AWS_DEFAULT_REGION"
+          echo "Package size OK for direct upload: $SIZE bytes"
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Market Intelligence Lambda..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://market-intelligence-lambda.zip \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Market Intelligence Lambda..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --zip-file fileb://market-intelligence-lambda.zip \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         fi
       - cd ../../..
       - echo "Deploying Demand Insights Engine..."
@@ -128,32 +156,59 @@ phases:
       - ls -lh demand-insights-lambda.zip
       - |
         SIZE=$(stat -f%z demand-insights-lambda.zip 2>/dev/null || stat -c%s demand-insights-lambda.zip)
-        if [ $SIZE -gt 52428800 ]; then
-          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
-          exit 1
-        fi
-        echo "Package size OK: $SIZE bytes"
-      - |
+        echo "Package size: $SIZE bytes"
+        
         FUNCTION_NAME="${PROJECT_NAME}-demand-insights-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
-        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
-          echo "Updating Demand Insights Lambda..."
-          aws lambda update-function-code \
-            --function-name "$FUNCTION_NAME" \
-            --zip-file fileb://demand-insights-lambda.zip \
-            --region "$AWS_DEFAULT_REGION"
+        
+        if [ $SIZE -gt 52428800 ]; then
+          echo "Package too large for direct upload. Using S3 deployment..."
+          
+          S3_BUCKET="${PROJECT_NAME}-pipeline-artifacts-${ENVIRONMENT}"
+          S3_KEY="lambda-packages/demand-insights-lambda.zip"
+          aws s3 cp demand-insights-lambda.zip s3://$S3_BUCKET/$S3_KEY --region "$AWS_DEFAULT_REGION"
+          
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Demand Insights Lambda from S3..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --s3-bucket "$S3_BUCKET" \
+              --s3-key "$S3_KEY" \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Demand Insights Lambda from S3..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --code S3Bucket="$S3_BUCKET",S3Key="$S3_KEY" \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         else
-          echo "Creating Demand Insights Lambda..."
-          aws lambda create-function \
-            --function-name "$FUNCTION_NAME" \
-            --runtime python3.11 \
-            --role "$LAMBDA_ROLE_ARN" \
-            --handler handler.lambda_handler \
-            --zip-file fileb://demand-insights-lambda.zip \
-            --timeout 60 \
-            --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
-            --region "$AWS_DEFAULT_REGION"
+          echo "Package size OK for direct upload: $SIZE bytes"
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Demand Insights Lambda..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://demand-insights-lambda.zip \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Demand Insights Lambda..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --zip-file fileb://demand-insights-lambda.zip \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         fi
       - cd ../../..
       - echo "Deploying Compliance Guardian..."
@@ -171,32 +226,59 @@ phases:
       - ls -lh compliance-lambda.zip
       - |
         SIZE=$(stat -f%z compliance-lambda.zip 2>/dev/null || stat -c%s compliance-lambda.zip)
-        if [ $SIZE -gt 52428800 ]; then
-          echo "ERROR: Package too large ($SIZE bytes). Lambda limit is 50MB."
-          exit 1
-        fi
-        echo "Package size OK: $SIZE bytes"
-      - |
+        echo "Package size: $SIZE bytes"
+        
         FUNCTION_NAME="${PROJECT_NAME}-compliance-guardian-${ENVIRONMENT}"
         echo "Processing function: $FUNCTION_NAME"
-        if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
-          echo "Updating Compliance Guardian Lambda..."
-          aws lambda update-function-code \
-            --function-name "$FUNCTION_NAME" \
-            --zip-file fileb://compliance-lambda.zip \
-            --region "$AWS_DEFAULT_REGION"
+        
+        if [ $SIZE -gt 52428800 ]; then
+          echo "Package too large for direct upload. Using S3 deployment..."
+          
+          S3_BUCKET="${PROJECT_NAME}-pipeline-artifacts-${ENVIRONMENT}"
+          S3_KEY="lambda-packages/compliance-lambda.zip"
+          aws s3 cp compliance-lambda.zip s3://$S3_BUCKET/$S3_KEY --region "$AWS_DEFAULT_REGION"
+          
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Compliance Guardian Lambda from S3..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --s3-bucket "$S3_BUCKET" \
+              --s3-key "$S3_KEY" \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Compliance Guardian Lambda from S3..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --code S3Bucket="$S3_BUCKET",S3Key="$S3_KEY" \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         else
-          echo "Creating Compliance Guardian Lambda..."
-          aws lambda create-function \
-            --function-name "$FUNCTION_NAME" \
-            --runtime python3.11 \
-            --role "$LAMBDA_ROLE_ARN" \
-            --handler handler.lambda_handler \
-            --zip-file fileb://compliance-lambda.zip \
-            --timeout 60 \
-            --memory-size 1024 \
-            --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
-            --region "$AWS_DEFAULT_REGION"
+          echo "Package size OK for direct upload: $SIZE bytes"
+          if aws lambda get-function --function-name "$FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
+            echo "Updating Compliance Guardian Lambda..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://compliance-lambda.zip \
+              --region "$AWS_DEFAULT_REGION"
+          else
+            echo "Creating Compliance Guardian Lambda..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime python3.11 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --handler handler.lambda_handler \
+              --zip-file fileb://compliance-lambda.zip \
+              --timeout 60 \
+              --memory-size 1024 \
+              --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
+              --region "$AWS_DEFAULT_REGION"
+          fi
         fi
       - cd ../../..
       - echo "Deploying Retail Copilot..."
