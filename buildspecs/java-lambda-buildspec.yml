@@ -24,13 +24,17 @@ phases:
       - echo "Checking build artifacts..."
       - ls -la target/
       
+      - echo "Cleaning up unnecessary jar files and using the fat jar..."
+      - rm -f target/auth-service-1.0.0.jar
+      - ls -la target/
+      
       - echo "Checking if Lambda function exists..."
       - |
         if aws lambda get-function --function-name "$LAMBDA_FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" 2>/dev/null; then
           echo "Lambda function exists, updating code..."
           aws lambda update-function-code \
             --function-name "$LAMBDA_FUNCTION_NAME" \
-            --zip-file fileb://target/auth-service-1.0.0-shaded.jar \
+            --zip-file fileb://target/auth-service.jar \
             --region "$AWS_DEFAULT_REGION"
           
           echo "Updating function configuration..."
@@ -50,7 +54,7 @@ phases:
             --runtime java17 \
             --role "$LAMBDA_ROLE_ARN" \
             --handler com.ecommerce.platform.auth.AuthHandler::handleRequest \
-            --zip-file fileb://target/auth-service-1.0.0-shaded.jar \
+            --zip-file fileb://target/auth-service.jar \
             --timeout 30 \
             --memory-size 512 \
             --environment Variables="{ENVIRONMENT=$ENVIRONMENT}" \
