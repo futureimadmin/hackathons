@@ -1,18 +1,15 @@
 # Create DMS VPC Role
-# AWS DMS requires a specific IAM role named "dms-vpc-role" to manage VPC resources
+# Creates the required IAM role for DMS to manage VPC resources
 
-Write-Host "Creating DMS VPC Role..." -ForegroundColor Cyan
+$ErrorActionPreference = "Stop"
 
-# Check if role already exists
-$roleExists = aws iam get-role --role-name dms-vpc-role 2>&1
+Write-Host "Creating DMS VPC Role..." -ForegroundColor Green
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "dms-vpc-role already exists!" -ForegroundColor Green
-} else {
-    Write-Host "Creating dms-vpc-role..." -ForegroundColor Yellow
-    
-    # Create the trust policy JSON file directly
-    $policyJson = @'
+$RoleName = "dms-vpc-role"
+$PolicyArn = "arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole"
+
+# Create trust policy document
+$TrustPolicy = @"
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -25,33 +22,41 @@ if ($LASTEXITCODE -eq 0) {
     }
   ]
 }
-'@
-    [System.IO.File]::WriteAllText("$PWD\trust-policy.json", $policyJson)
-    
-    # Create the role
-    aws iam create-role --role-name dms-vpc-role --assume-role-policy-document file://trust-policy.json --description "DMS VPC management role"
-    
-    # Clean up temp file
-    Remove-Item "trust-policy.json" -ErrorAction SilentlyContinue
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Role created successfully!" -ForegroundColor Green
-    } else {
-        Write-Host "Failed to create role" -ForegroundColor Red
-        exit 1
-    }
+"@
+
+# Save trust policy to temp file
+$TrustPolicyFile = "trust-policy-temp.json"
+$TrustPolicy | Out-File -FilePath $TrustPolicyFile -Encoding ASCII
+
+# Create IAM role
+Write-Host "`nCreating IAM role: $RoleName" -ForegroundColor Yellow
+try {
+    aws iam create-role `
+        --role-name $RoleName `
+        --assume-role-policy-document file://$TrustPolicyFile `
+        --description "DMS VPC Management Role"
+    Write-Host "IAM role created successfully" -ForegroundColor Green
+} catch {
+    Write-Host "IAM role may already exist or error occurred: $_" -ForegroundColor Yellow
 }
 
-# Attach the AWS managed policy
-Write-Host "Attaching AmazonDMSVPCManagementRole policy..." -ForegroundColor Yellow
-
-aws iam attach-role-policy --role-name dms-vpc-role --policy-arn arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Policy attached successfully!" -ForegroundColor Green
-} else {
-    Write-Host "Failed to attach policy (may already be attached)" -ForegroundColor Yellow
+# Attach managed policy
+Write-Host "`nAttaching managed policy to role..." -ForegroundColor Yellow
+try {
+    aws iam attach-role-policy `
+        --role-name $RoleName `
+        --policy-arn $PolicyArn
+    Write-Host "Policy attached successfully" -ForegroundColor Green
+} catch {
+    Write-Host "Policy may already be attached or error occurred: $_" -ForegroundColor Yellow
 }
 
-Write-Host "DMS VPC Role is ready!" -ForegroundColor Green
-Write-Host "You can now run: terraform apply -var-file=terraform.dev.tfvars" -ForegroundColor Cyan
+# Clean up temp file
+Remove-Item $TrustPolicyFile -Force
+
+Write-Host "`n=== DMS VPC Role Created ===" -ForegroundColor Green
+Write-Host "Role Name: $RoleName" -ForegroundColor Cyan
+Write-Host "Policy: AmazonDMSVPCManagementRole" -ForegroundColor Cyan
+Write-Host "`nNext Steps:" -ForegroundColor Yellow
+Write-Host "1. Proceed with Terraform deployment" -ForegroundColor White
+Write-Host "2. DMS will use this role to manage VPC resources" -ForegroundColor White

@@ -50,16 +50,9 @@ resource "aws_security_group" "dms" {
   }
 }
 
-# DMS to On-Premise MySQL
-resource "aws_security_group_rule" "dms_to_mysql" {
-  type              = "egress"
-  from_port         = 3306
-  to_port           = 3306
-  protocol          = "tcp"
-  cidr_blocks       = ["172.20.10.2/32"]
-  security_group_id = aws_security_group.dms.id
-  description       = "Allow DMS to connect to on-premise MySQL"
-}
+# Note: The general egress rule above (0.0.0.0/0) already allows DMS to connect
+# to MySQL at any IP address, including both private (172.20.10.2) and public (106.192.45.56).
+# No additional specific rule is needed.
 
 # Batch Security Group
 resource "aws_security_group" "batch" {

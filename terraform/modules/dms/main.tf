@@ -34,7 +34,7 @@ resource "aws_dms_replication_instance" "main" {
   multi_az                     = var.multi_az
   engine_version               = "3.5.4"
   auto_minor_version_upgrade   = true
-  publicly_accessible          = false
+  publicly_accessible          = true  # Changed to true for direct public IP connection
   replication_subnet_group_id  = aws_dms_replication_subnet_group.main.id
   vpc_security_group_ids       = var.security_group_ids
   kms_key_arn                  = var.kms_key_arn

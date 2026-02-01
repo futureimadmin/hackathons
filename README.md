@@ -1,54 +1,84 @@
-# FutureIM eCommerce AI Platform
+# FutureIM eCommerce AI Analytics Platform
 
-Enterprise-grade cloud infrastructure for AI-powered eCommerce analytics platform with automated CI/CD pipeline, data replication, and microservices architecture.
+**Enterprise-grade cloud infrastructure for AI-powered eCommerce analytics**
 
 ---
 
-## Table of Contents
+## 🚀 Quick Start
+
+```powershell
+# Step 1: Run prerequisite scripts
+cd terraform
+.\create-backend-resources.ps1
+.\create-dms-vpc-role.ps1
+.\create-mysql-secret.ps1 -MySQLPassword "your_password"
+
+# Step 2: Configure Terraform
+# Edit terraform/terraform.dev.tfvars with your values
+
+# Step 3: Deploy infrastructure
+terraform init -backend-config=backend.tfvars
+terraform apply -var-file="terraform.dev.tfvars"
+
+# Step 4: Complete GitHub connection in AWS Console
+# CodePipeline → Settings → Connections → Authorize
+
+# Done! Your platform is ready.
+```
+
+**Deployment Time:** 20-25 minutes
+
+---
+
+## 📋 Table of Contents
 
 1. [Overview](#overview)
 2. [Architecture](#architecture)
-3. [Infrastructure Modules](#infrastructure-modules)
-4. [Deployment Architecture](#deployment-architecture)
-5. [Prerequisites](#prerequisites)
-6. [Quick Start](#quick-start)
-7. [CloudFormation Stack Management](#cloudformation-stack-management)
-8. [Configuration](#configuration)
-9. [Post-Deployment](#post-deployment)
-10. [Troubleshooting](#troubleshooting)
+3. [Modules](#modules)
+4. [Quick Start](#quick-start-guide)
+5. [Configuration](#configuration)
+6. [Operations](#operations)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-### Purpose
-Cloud infrastructure for 5 AI systems analyzing eCommerce data:
-- **Compliance Guardian** - Regulatory compliance monitoring
-- **Demand Insights Engine** - Demand forecasting and analytics
-- **Global Market Pulse** - Market sentiment analysis
-- **Market Intelligence Hub** - Competitive intelligence
-- **Retail Copilot** - AI-powered retail assistant
+### What is This Platform?
 
-### Technology Stack
-- **Infrastructure**: Terraform 1.5+, AWS
-- **Backend**: Java 17 (Auth), Python 3.11 (AI Systems)
-- **Frontend**: React 18, Node.js 18
-- **Data**: MySQL 8.0 → AWS DMS → S3 (Parquet) → Athena
-- **CI/CD**: CodePipeline V2, CodeBuild, GitHub
+The FutureIM eCommerce AI Platform provides 5 specialized AI systems that analyze eCommerce data and deliver actionable insights:
+
+1. **Market Intelligence Hub** - Forecasting and market analytics
+2. **Demand Insights Engine** - Customer insights and demand forecasting
+3. **Compliance Guardian** - Fraud detection and compliance monitoring
+4. **Retail Copilot** - AI-powered assistant for retail teams
+5. **Global Market Pulse** - Global market trends and opportunities
 
 ### Key Features
-- Automated CI/CD with GitHub integration
-- Real-time data replication (MySQL → S3)
-- API Gateway with 60+ endpoints
-- Multi-AZ deployment
-- KMS encryption at rest
-- Auto-scaling Lambda functions
+
+- ✅ **Automated CI/CD** - Push to GitHub, auto-deploy to AWS
+- ✅ **Real-time Data Replication** - MySQL → S3 via DMS
+- ✅ **Scalable Architecture** - Serverless Lambda functions
+- ✅ **Secure by Design** - KMS encryption, VPC isolation
+- ✅ **Production Ready** - Monitoring, logging, error handling
+
+### Technology Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Infrastructure** | AWS, Terraform, CloudFormation |
+| **Backend** | Java 17 (Auth), Python 3.11 (AI Systems) |
+| **Frontend** | React 18, TypeScript, Vite, Material-UI |
+| **Database** | MySQL 9.6 (on-premises) |
+| **Data Pipeline** | DMS, S3, Glue, Athena |
+| **CI/CD** | CodePipeline, CodeBuild, GitHub |
+| **Monitoring** | CloudWatch, CloudTrail |
 
 ---
 
 ## Architecture
 
-### System Architecture
+### High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -77,351 +107,318 @@ Cloud infrastructure for 5 AI systems analyzing eCommerce data:
               └──────────────────────┘
 ```
 
-### Data Flow Architecture
+### Data Flow
 
 ```
-On-Premise MySQL (172.20.10.4)
-         │
-         │ DMS Replication (Full Load + CDC)
-         ▼
-DMS Replication Instance (dms.t3.medium)
-         │
-         │ Parquet Files (Compressed + Encrypted)
-         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    S3 Data Buckets                           │
-│  • compliance-guardian-data-dev                              │
-│  • demand-insights-engine-data-dev                           │
-│  • global-market-pulse-data-dev                              │
-│  • market-intelligence-hub-data-dev                          │
-│  • retail-copilot-data-dev                                   │
-└────────────────────────┬────────────────────────────────────┘
-                         │ Glue Crawlers
-                         ▼
-                  AWS Glue Data Catalog
-                         │
-                         │ SQL Queries
-                         ▼
-                   Amazon Athena
+MySQL (172.20.10.2) → DMS → S3 (Parquet) → Glue → Athena → Lambda → API Gateway → Frontend
 ```
 
 ### Network Architecture
 
 ```
 VPC (10.0.0.0/16)
-│
-├─ Public Subnets
-│  ├─ 10.0.1.0/24 (us-east-2a)
-│  ├─ 10.0.2.0/24 (us-east-2b)
-│  └─ Resources: NAT Gateway, Internet Gateway
-│
-└─ Private Subnets
-   ├─ 10.0.11.0/24 (us-east-2a)
-   ├─ 10.0.12.0/24 (us-east-2b)
-   └─ Resources: DMS, Lambda Functions, RDS (future)
+├─ Public Subnets (10.0.1.0/24, 10.0.2.0/24)
+│  └─ NAT Gateway, Internet Gateway
+└─ Private Subnets (10.0.11.0/24, 10.0.12.0/24)
+   └─ DMS, Lambda Functions
 ```
 
 ---
 
-## Infrastructure Modules
+## Modules
 
-### 1. VPC Module (`modules/vpc/`)
-**Purpose**: Network foundation with public/private subnets
+### 1. AI Systems (5 Lambda Functions)
 
-**Resources Created**:
-- VPC with CIDR 10.0.0.0/16
-- 2 Public subnets (Multi-AZ)
-- 2 Private subnets (Multi-AZ)
-- Internet Gateway
-- NAT Gateway
-- Route tables
-- Security groups (DMS, Lambda, VPC endpoints)
+#### Market Intelligence Hub
+**Purpose:** Time series forecasting and market analytics
 
-**Outputs**: VPC ID, subnet IDs, security group IDs
+**Features:**
+- ARIMA, Prophet, LSTM forecasting models
+- Automatic model selection
+- Confidence intervals
+- Performance metrics (RMSE, MAE, MAPE, R²)
 
----
+**API Endpoints:**
+- `POST /market-intelligence/forecast` - Generate forecasts
+- `POST /market-intelligence/compare-models` - Compare model performance
+- `GET /market-intelligence/trends` - Get market trends
 
-### 2. KMS Module (`modules/kms/`)
-**Purpose**: Encryption key management
+**Tech Stack:** Python 3.11, scikit-learn, Prophet, TensorFlow
 
-**Resources Created**:
-- KMS key for encryption at rest
-- Key policy for service access
-- Key alias
-
-**Used By**: S3, DMS, Secrets Manager, CloudWatch Logs
+**Location:** `ai-systems/market-intelligence-hub/`
 
 ---
 
-### 3. IAM Module (`modules/iam/`)
-**Purpose**: Identity and access management
+#### Demand Insights Engine
+**Purpose:** Customer insights, demand forecasting, pricing optimization
 
-**Resources Created**:
-- Lambda execution role
-- CodePipeline role
-- CodeBuild role
-- DMS service roles
-- S3 access policies
+**Features:**
+- Customer segmentation (K-Means, RFM analysis)
+- Demand forecasting (XGBoost)
+- Price elasticity analysis
+- Customer lifetime value (CLV) prediction
+- Churn prediction
 
-**Permissions**: Least privilege access for each service
+**API Endpoints:**
+- `GET /demand-insights/segments` - Customer segmentation
+- `POST /demand-insights/forecast` - Demand forecasting
+- `POST /demand-insights/price-elasticity` - Price elasticity
+- `POST /demand-insights/clv` - CLV prediction
+- `POST /demand-insights/churn` - Churn prediction
 
----
+**Tech Stack:** Python 3.11, XGBoost, scikit-learn, pandas
 
-### 4. S3 Data Lake Modules (`modules/s3-data-lake/`)
-**Purpose**: Data storage for each AI system
-
-**Resources Created** (per AI system):
-- Raw data bucket (Parquet files from DMS)
-- Processed data bucket (transformed data)
-- Archive bucket (historical data)
-- Bucket policies
-- Lifecycle rules
-- Versioning enabled
-- KMS encryption
-
-**Total**: 15 S3 buckets (5 systems × 3 buckets each)
+**Location:** `ai-systems/demand-insights-engine/`
 
 ---
 
-### 5. DMS Module (`modules/dms/`)
-**Purpose**: Real-time data replication from MySQL to S3
+#### Compliance Guardian
+**Purpose:** Fraud detection, risk scoring, PCI DSS compliance
 
-**Resources Created**:
-- DMS replication instance (dms.t3.medium)
-- Source endpoint (MySQL at 172.20.10.4)
-- 5 Target endpoints (S3 buckets)
-- 5 Replication tasks (one per AI system)
-- IAM roles for S3 access
-- CloudWatch log group
+**Features:**
+- Fraud detection (Isolation Forest)
+- Risk scoring (Gradient Boosting)
+- PCI DSS compliance monitoring
+- Document understanding (NLP with transformers)
+- Credit card masking
 
-**Configuration**:
-- Engine version: 3.5.4
-- Format: Parquet (compressed with GZIP)
-- Mode: Full Load + CDC (Change Data Capture)
-- Encryption: SSE-KMS
+**API Endpoints:**
+- `POST /compliance/fraud-detection` - Detect fraudulent transactions
+- `POST /compliance/risk-score` - Calculate risk scores
+- `GET /compliance/high-risk-transactions` - Get high-risk transactions
+- `POST /compliance/pci-compliance` - Check PCI DSS compliance
+- `GET /compliance/compliance-report` - Generate compliance report
 
-**Data Flow**:
-```
-MySQL Table → DMS Task → S3 Bucket (Parquet)
-ecommerce.compliance_* → compliance-guardian-data-dev
-ecommerce.demand_* → demand-insights-engine-data-dev
-ecommerce.market_pulse_* → global-market-pulse-data-dev
-ecommerce.market_intel_* → market-intelligence-hub-data-dev
-ecommerce.copilot_* → retail-copilot-data-dev
-```
+**Tech Stack:** Python 3.11, scikit-learn, XGBoost, transformers
+
+**Location:** `ai-systems/compliance-guardian/`
 
 ---
 
-### 6. API Gateway Module (`modules/api-gateway/`)
-**Purpose**: REST API for all microservices
+#### Retail Copilot
+**Purpose:** AI-powered assistant for retail teams
 
-**Resources Created**:
-- REST API Gateway
-- 60+ API endpoints across 6 services
-- CloudWatch Logs role
-- API deployment (dev stage)
+**Features:**
+- Natural language chat interface
+- Natural language to SQL conversion
+- Microsoft Copilot-like behavior
+- Conversation history
+- Product recommendations
+- Sales reports
 
-**Endpoints**:
-- `/auth` - Authentication (login, register, refresh)
-- `/compliance-guardian` - Compliance analysis
-- `/demand-insights` - Demand forecasting
-- `/market-pulse` - Market sentiment
-- `/market-intelligence` - Competitive intelligence
-- `/retail-copilot` - AI assistant
+**API Endpoints:**
+- `POST /copilot/chat` - Chat with copilot
+- `GET /copilot/conversations` - Get conversation history
+- `POST /copilot/conversation` - Create new conversation
+- `GET /copilot/inventory` - Query inventory
+- `GET /copilot/orders` - Query orders
+- `POST /copilot/recommendations` - Get product recommendations
 
-**Integration**: Lambda functions (placeholder ARNs for now)
+**Tech Stack:** Python 3.11, AWS Bedrock (Claude), boto3
 
----
-
-### 7. CI/CD Pipeline Module (`modules/cicd-pipeline/`)
-**Purpose**: Automated deployment pipeline
-
-**Resources Created**:
-- CodePipeline V2 (auto-trigger enabled)
-- 4 CodeBuild projects:
-  - Infrastructure (Terraform apply)
-  - Java Lambda (Auth service)
-  - Python Lambdas (5 AI systems)
-  - Frontend (React build + S3 deploy)
-- S3 artifacts bucket
-- CodeStar GitHub connection
-- Secrets Manager (GitHub token)
-
-**Pipeline Stages**:
-1. **Source**: GitHub → S3 artifacts
-2. **Infrastructure**: Deploy Terraform changes
-3. **Build Lambdas**: Compile and deploy functions (parallel)
-4. **Build Frontend**: Build React app → Deploy to S3
-
-**Features**:
-- Auto-triggers on GitHub push
-- Retry individual stages
-- Parallel Lambda builds
-- KMS-encrypted artifacts
+**Location:** `ai-systems/retail-copilot/`
 
 ---
 
-### 8. S3 Frontend Module (`modules/s3-frontend/`)
-**Purpose**: Static website hosting for React frontend
+#### Global Market Pulse
+**Purpose:** Global market trends and expansion opportunities
 
-**Resources Created**:
-- S3 bucket with website hosting
-- Bucket policy for public read
-- CORS configuration
+**Features:**
+- Market trend analysis (time series decomposition)
+- Regional price comparison
+- Market opportunity scoring (MCDA)
+- Competitor analysis
+- Currency conversion support
 
-**URL**: `http://futureim-ecommerce-ai-platform-frontend-dev.s3-website.us-east-2.amazonaws.com`
+**API Endpoints:**
+- `GET /global-market/trends` - Market trends
+- `GET /global-market/regional-prices` - Regional prices
+- `POST /global-market/price-comparison` - Compare prices
+- `POST /global-market/opportunities` - Market opportunities
+- `POST /global-market/competitor-analysis` - Competitor analysis
 
----
+**Tech Stack:** Python 3.11, scipy, statsmodels, pandas
 
-## Deployment Architecture
-
-### CI/CD Pipeline Flow
-
-```
-Developer Push to GitHub
-         ↓
-CodePipeline Auto-Triggers (V2)
-         ↓
-┌────────────────────────────────────────┐
-│ Stage 1: Source                        │
-│ • Clone from GitHub                    │
-│ • Upload to S3 artifacts bucket        │
-└────────────┬───────────────────────────┘
-             ↓
-┌────────────────────────────────────────┐
-│ Stage 2: Infrastructure                │
-│ • Run Terraform plan                   │
-│ • Apply infrastructure changes         │
-│ • Update VPC, DMS, API Gateway, etc.   │
-└────────────┬───────────────────────────┘
-             ↓
-┌────────────────────────────────────────┐
-│ Stage 3: Build Lambdas (Parallel)      │
-│ ┌──────────────┐  ┌─────────────────┐ │
-│ │ Java Lambda  │  │ Python Lambdas  │ │
-│ │ (Auth)       │  │ (5 AI Systems)  │ │
-│ │ • mvn package│  │ • pip install   │ │
-│ │ • Deploy     │  │ • zip & deploy  │ │
-│ └──────────────┘  └─────────────────┘ │
-└────────────┬───────────────────────────┘
-             ↓
-┌────────────────────────────────────────┐
-│ Stage 4: Build Frontend                │
-│ • npm install                          │
-│ • npm run build                        │
-│ • aws s3 sync to frontend bucket       │
-└────────────────────────────────────────┘
-```
-
-### Deployment Environments
-
-| Environment | Region    | VPC CIDR    | DMS Instance  |
-|-------------|-----------|-------------|---------------|
-| Development | us-east-2 | 10.0.0.0/16 | dms.t3.medium |
-| Production  | us-east-2 | 10.1.0.0/16 | dms.c5.xlarge |
+**Location:** `ai-systems/global-market-pulse/`
 
 ---
 
-## Prerequisites
+### 2. Analytics Service
 
-### Required Tools
-- Terraform 1.5+
-- AWS CLI configured
-- Git
-- PowerShell (Windows) or Bash (Linux/Mac)
+**Purpose:** Execute Athena queries and provide analytics endpoints
 
-### AWS Account Requirements
-- Account ID: 450133579764
-- Region: us-east-2
-- IAM permissions for all services
+**Features:**
+- Secure query execution with SQL injection prevention
+- JWT authentication
+- Multi-system support
+- Athena integration
 
-### External Dependencies
-- MySQL server: 172.20.10.4:3306
-- Database: ecommerce
-- User: dms_remote
-- Password: (stored in Secrets Manager)
+**API Endpoints:**
+- `GET /analytics/{system}/query` - Execute Athena query
+- `POST /analytics/{system}/forecast` - Generate forecast
+- `GET /analytics/{system}/insights` - Get insights
+
+**Tech Stack:** Python 3.11, boto3, PyAthena, pandas
+
+**Location:** `analytics-service/`
 
 ---
 
-## Quick Start
+### 3. Authentication Service
 
-### 🚀 **Recommended: CloudFormation Stack Deployment**
+**Purpose:** User authentication and authorization
 
-**Use this approach for complete stack management and easy cleanup.**
+**Features:**
+- User registration with email validation
+- User login with JWT token generation
+- Password reset via email
+- JWT token verification
+- Secure password hashing (BCrypt)
 
-#### **Step 1: Deploy Complete Environment**
+**API Endpoints:**
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login and get JWT token
+- `POST /auth/forgot-password` - Request password reset
+- `POST /auth/reset-password` - Reset password
+- `POST /auth/verify` - Verify JWT token
+
+**Tech Stack:** Java 17, AWS Lambda, DynamoDB, Secrets Manager, SES
+
+**Location:** `auth-service/`
+
+---
+
+### 4. Frontend Application
+
+**Purpose:** React-based dashboard for all AI systems
+
+**Features:**
+- User authentication (login, register, forgot password)
+- JWT token management
+- Home page with 5 system cards
+- Protected routes
+- Dashboard navigation
+- Responsive design
+
+**Tech Stack:** React 18, TypeScript, Vite, Material-UI, React Router
+
+**Location:** `frontend/`
+
+---
+
+### 5. Data Processing Pipeline
+
+**Purpose:** Validate, transform, and optimize data for analytics
+
+**Features:**
+- Raw to curated processing (validation, deduplication, compliance)
+- Curated to prod processing (transformation, optimization)
+- Schema validation
+- Business rules validation
+- PCI DSS compliance checks
+
+**Tech Stack:** Python 3.11, pandas, pyarrow, Docker, AWS Batch
+
+**Location:** `data-processing/`
+
+---
+
+### 6. Infrastructure (Terraform)
+
+**Purpose:** Infrastructure as Code for all AWS resources
+
+**Modules:**
+- **VPC** - Network foundation with public/private subnets
+- **KMS** - Encryption key management
+- **IAM** - Identity and access management
+- **S3 Data Lake** - Data storage for each AI system (15 buckets)
+- **DMS** - Real-time data replication from MySQL to S3
+- **API Gateway** - REST API with 60+ endpoints
+- **CI/CD Pipeline** - Automated deployment pipeline
+- **S3 Frontend** - Static website hosting
+
+**Tech Stack:** Terraform 1.5+, AWS
+
+**Location:** `terraform/`
+
+---
+
+### 7. Database
+
+**Purpose:** MySQL database schema and setup scripts
+
+**Features:**
+- Main eCommerce schema (customers, products, orders, etc.)
+- System-specific schemas for each AI system
+- Sample data generator
+- DMS replication setup
+
+**Tech Stack:** MySQL 9.6, Python 3.11
+
+**Location:** `database/`
+
+---
+
+## Quick Start Guide
+
+### Prerequisites
+
+#### Required Tools
+- **AWS CLI** - Version 2.x or higher
+- **Terraform** - Version 1.5 or higher
+- **Git** - For repository access
+- **PowerShell** - Windows PowerShell 5.1+ or PowerShell Core 7+
+- **MySQL** - Version 9.6 (on-premises server)
+
+#### AWS Account Requirements
+- **Account ID:** 450133579764
+- **Region:** us-east-2 (Ohio)
+- **IAM Permissions:** Administrator access or equivalent
+
+#### MySQL Server Requirements
+- **Host:** 172.20.10.2
+- **Port:** 3306
+- **Database:** ecommerce
+- **User:** dms_remote
+- **Password:** SaiesaShanmukha@123
+- **Bind Address:** 0.0.0.0 (must accept remote connections)
+
+### Step 1: Verify MySQL Server
+
 ```powershell
-# Deploy dev environment with CloudFormation stack
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_github_token"
+# Verify MySQL bind address and connectivity
+cd database
+.\check-mysql-bind-address.ps1
 
-# Deploy prod environment
-.\cloudformation\deploy-stack.ps1 -Environment prod -GitHubToken "your_github_token"
+# Verify MySQL is listening on all interfaces
+netstat -ano | findstr :3306
+# Should show: 0.0.0.0:3306
+
+# Test dms_remote user connection
+mysql -u dms_remote -p
+# Enter password: SaiesaShanmukha@123
 ```
 
-#### **Step 2: Check Stack Status**
-```powershell
-# Basic status
-.\cloudformation\stack-status.ps1 -Environment dev
+### Step 2: Run Prerequisite Scripts
 
-# Detailed status with resources and events
-.\cloudformation\stack-status.ps1 -Environment dev -Detailed
-```
-
-#### **Step 3: Complete GitHub Connection**
-1. Go to AWS Console → CodePipeline → Settings → Connections
-2. Find connection named `futureim-github-dev`
-3. Click "Update pending connection" and authorize with GitHub
-
-#### **Step 4: When You Need to Start Fresh**
-```powershell
-# Delete EVERYTHING (complete cleanup)
-.\cloudformation\delete-stack.ps1 -Environment dev
-
-# Recreate fresh environment
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_github_token"
-```
-
-**Benefits of CloudFormation Approach:**
-- ✅ **Complete resource management** - All resources tracked as single unit
-- ✅ **Easy cleanup** - Delete stack = delete ALL resources
-- ✅ **No orphaned resources** - CloudFormation tracks everything
-- ✅ **Perfect for development** - Create/delete environments easily
-- ✅ **No prerequisites** - All Terraform dependencies included automatically
-- ✅ **One-step deployment** - No need for separate setup scripts
-
----
-
-### 🔧 **Alternative: Traditional Terraform Deployment**
-
-**Use this if you prefer direct Terraform management.**
-
-### Step 1: One-Time Prerequisites (Terraform Only)
-
-These create resources that Terraform depends on. Run these scripts from the `terraform/` directory:
+These scripts create AWS resources that Terraform depends on:
 
 ```powershell
 cd terraform
 
 # 1. Create Terraform backend (S3 + DynamoDB)
-.\create-backend-resources.ps1
+.\create-backend-resources.ps1 -Region us-east-2
 
-# 2. Create DMS VPC role (AWS requirement)
+# 2. Create DMS VPC role (required by AWS DMS)
 .\create-dms-vpc-role.ps1
 
 # 3. Create MySQL password secret
-.\create-mysql-secret.ps1
+.\create-mysql-secret.ps1 -MySQLPassword "SaiesaShanmukha@123" -Environment dev
+
+# IMPORTANT: Copy the Secret ARN from output!
 ```
 
-**Available Scripts**:
-- `create-backend-resources.ps1` - Creates S3 bucket and DynamoDB table for Terraform state
-- `create-dms-vpc-role.ps1` - Creates required IAM role for DMS VPC management
-- `create-mysql-secret.ps1` - Creates Secrets Manager secret for MySQL password
-
-**Important**: Copy the secret ARN from step 3 output.
-
----
-
-### Step 2: Configure Variables (Terraform Only)
+### Step 3: Configure Terraform Variables
 
 Edit `terraform/terraform.dev.tfvars`:
 
@@ -434,486 +431,359 @@ vpc_cidr     = "10.0.0.0/16"
 # GitHub Configuration
 github_repo   = "futureimadmin/hackathons"
 github_branch = "master"
-github_token  = "github_pat_YOUR_TOKEN_HERE"
+github_token  = "ghp_your_token_here"
 
-# MySQL Secret (from step 1.3)
-mysql_password_secret_arn = "arn:aws:secretsmanager:us-east-2:450133579764:secret:..."
+# MySQL Configuration
+mysql_server_ip = "172.20.10.2"
+mysql_port      = 3306
+mysql_database  = "ecommerce"
+mysql_username  = "dms_remote"
+mysql_password_secret_arn = "arn:aws:secretsmanager:us-east-2:450133579764:secret:..."  # From Step 2
 ```
 
----
-
-### Step 3: Deploy Infrastructure (Terraform Only)
+### Step 4: Deploy Infrastructure with Terraform
 
 ```powershell
-# Initialize Terraform
-terraform init
+cd terraform
 
-# Review changes
+# Initialize Terraform with backend configuration
+terraform init -backend-config=backend.tfvars
+
+# Review the execution plan
 terraform plan -var-file="terraform.dev.tfvars"
 
-# Deploy (type 'yes' when prompted)
+# Deploy infrastructure (type 'yes' when prompted)
 terraform apply -var-file="terraform.dev.tfvars"
 ```
 
-**Deployment Time**: ~20-25 minutes
+**Deployment Time:** 20-25 minutes
 
----
+### Step 5: Complete GitHub Connection
 
-### Step 4: Post-Deployment Configuration (Both Methods)
+1. Open AWS Console
+2. Navigate to: Developer Tools → Connections
+3. Find connection: `futureim-github-dev`
+4. Click "Update pending connection"
+5. Authorize GitHub access
+6. Verify status shows "AVAILABLE"
 
-#### Activate GitHub Connection
-1. Go to AWS Console → Developer Tools → Connections
-2. Find: `futureim-github-dev`
-3. Click "Update pending connection"
-4. Authorize GitHub access
-5. Status should change to "AVAILABLE"
+### Step 6: Start DMS Replication
 
-#### Start DMS Replication Tasks
 ```powershell
-# List tasks
-aws dms describe-replication-tasks --query 'ReplicationTasks[].ReplicationTaskIdentifier'
+# List DMS replication tasks
+aws dms describe-replication-tasks `
+  --query 'ReplicationTasks[].ReplicationTaskIdentifier'
 
-# Start each task
-aws dms start-replication-task \
-  --replication-task-arn <task-arn> \
+# Start each replication task
+aws dms start-replication-task `
+  --replication-task-arn <task-arn> `
   --start-replication-task-type start-replication
 ```
 
-Or use AWS Console: DMS → Database migration tasks → Select task → Actions → Start
+Or use AWS Console:
+- DMS → Database migration tasks
+- Select task → Actions → Start
 
----
+### Step 7: Verify Deployment
 
-## CloudFormation Stack Management
-
-### 📋 **Available CloudFormation Scripts**
-
-| Script | Purpose | When to Use |
-|--------|---------|-------------|
-| `deploy-stack.ps1` | Deploy complete environment | Initial setup, updates, recreating environment |
-| `delete-stack.ps1` | Delete complete environment | Cleanup, starting fresh, cost savings |
-| `stack-status.ps1` | Check stack status | Monitoring, troubleshooting, resource verification |
-
-### 🚀 **Deployment Scenarios**
-
-#### **Scenario 1: First Time Setup**
 ```powershell
-# Deploy complete dev environment
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
+# Check Terraform outputs
+terraform output
 
-# Check deployment status
-.\cloudformation\stack-status.ps1 -Environment dev -Detailed
+# Verify DMS replication
+cd database
+.\verify-dms-replication.ps1
 
-# Complete GitHub connection (one-time)
-# AWS Console → CodePipeline → Settings → Connections → Authorize
-```
-
-#### **Scenario 2: Daily Development**
-```powershell
-# Environment already exists - just develop and commit
-git add .
-git commit -m "New feature"
-git push origin master
-
-# Pipeline auto-triggers and deploys changes
-# Monitor: .\cloudformation\stack-status.ps1 -Environment dev
-```
-
-#### **Scenario 3: Clean Slate (Start Fresh)**
-```powershell
-# Delete everything
-.\cloudformation\delete-stack.ps1 -Environment dev
-
-# Recreate fresh environment
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
-```
-
-#### **Scenario 4: Production Deployment**
-```powershell
-# Deploy to production
-.\cloudformation\deploy-stack.ps1 -Environment prod -GitHubToken "your_token"
-
-# Verify production deployment
-.\cloudformation\stack-status.ps1 -Environment prod -Detailed
-```
-
-#### **Scenario 5: Cost Optimization**
-```powershell
-# Delete dev environment when not in use (saves costs)
-.\cloudformation\delete-stack.ps1 -Environment dev
-
-# Recreate when needed
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
-```
-
-### 🔧 **Advanced Usage**
-
-#### **Custom Parameters**
-```powershell
-# Deploy with custom settings
-.\cloudformation\deploy-stack.ps1 `
-  -Environment dev `
-  -GitHubToken "your_token" `
-  -ProjectName "my-custom-project" `
-  -VpcCidr "172.16.0.0/16" `
-  -MySQLServerIP "172.20.10.2" `
-  -Region "us-west-2"
-```
-
-#### **Force Delete (Skip Confirmation)**
-```powershell
-# Delete without confirmation prompt
-.\cloudformation\delete-stack.ps1 -Environment dev -Force
-```
-
-#### **Monitor Stack Events**
-```powershell
-# Watch stack deployment in real-time
-.\cloudformation\stack-status.ps1 -Environment dev -Detailed
-
-# Check specific resources
-aws cloudformation list-stack-resources --stack-name futureim-ecommerce-ai-platform-dev
-```
-
-### 🎯 **When to Use Each Approach**
-
-#### **Use CloudFormation When:**
-- ✅ You want complete resource management
-- ✅ You need easy environment cleanup
-- ✅ You're doing development/testing
-- ✅ You want to avoid orphaned resources
-- ✅ You need consistent environment recreation
-- ✅ You want to skip Terraform prerequisite scripts
-- ✅ You prefer one-command deployment
-
-#### **Use Direct Terraform When:**
-- ✅ You need fine-grained control
-- ✅ You're integrating with existing Terraform workflows
-- ✅ You want to manage state files directly
-- ✅ You're doing infrastructure-as-code development
-
-### 🛠️ **Troubleshooting CloudFormation**
-
-#### **Stack Creation Failed**
-```powershell
-# Check detailed status
-.\cloudformation\stack-status.ps1 -Environment dev -Detailed
-
-# View events in AWS Console
-# CloudFormation → Stacks → [StackName] → Events
-```
-
-#### **Stack Deletion Failed**
-```powershell
-# Check for resources preventing deletion
-aws cloudformation describe-stack-resources --stack-name futureim-ecommerce-ai-platform-dev
-
-# Manually empty S3 buckets if needed
-aws s3 rm s3://bucket-name --recursive
-
-# Retry deletion
-.\cloudformation\delete-stack.ps1 -Environment dev -Force
-```
-
-#### **GitHub Connection Issues**
-```powershell
-# Deploy stack first
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
-
-# Then manually complete connection in AWS Console
-# CodePipeline → Settings → Connections → Update pending connection
+# Check pipeline status
+aws codepipeline get-pipeline-state `
+  --name futureim-ecommerce-ai-platform-pipeline-dev
 ```
 
 ---
 
 ## Configuration
 
-### Environment Variables
+### Terraform Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `aws_region` | AWS region | us-east-2 |
-| `environment` | Environment name | dev, prod |
-| `project_name` | Project prefix | futureim-ecommerce-ai-platform |
-| `vpc_cidr` | VPC CIDR block | 10.0.0.0/16 |
-| `github_repo` | GitHub repository | futureimadmin/hackathons |
-| `github_branch` | Git branch | master |
-| `github_token` | GitHub PAT | github_pat_... |
-| `mysql_password_secret_arn` | Secret ARN | arn:aws:secretsmanager:... |
+Edit `terraform/terraform.dev.tfvars`:
+
+```hcl
+aws_region   = "us-east-2"
+environment  = "dev"
+project_name = "futureim-ecommerce-ai-platform"
+vpc_cidr     = "10.0.0.0/16"
+
+github_repo   = "futureimadmin/hackathons"
+github_branch = "master"
+github_token  = "ghp_your_token"
+
+mysql_server_ip = "172.20.10.2"
+mysql_port      = 3306
+mysql_database  = "ecommerce"
+mysql_username  = "dms_remote"
+mysql_password_secret_arn = "arn:aws:secretsmanager:us-east-2:450133579764:secret:..."
+```
 
 ### MySQL Configuration
 
-**Current Settings:**
-- **Host**: 172.20.10.2
-- **Port**: 3306
-- **User**: dms_remote
-- **Database**: ecommerce
-
-**Security Note**: We use a dedicated `dms_remote` user with minimal privileges (not root) for better security.
-
-#### **Updating MySQL IP Address**
-
-If your MySQL server IP changes, use the automated update script:
-
-```powershell
-# Update IP address across all configurations
-.\update-mysql-ip.ps1 -NewMySQLIP "172.20.10.3" -Environment dev
+```ini
+# my.ini
+[mysqld]
+bind-address = 0.0.0.0
+port = 3306
+log_bin = mysql-bin
+binlog_format = ROW
 ```
 
-This script updates:
-- ✅ Terraform variables
-- ✅ CloudFormation stack parameters  
-- ✅ Security group rules
-- ✅ DMS endpoint configuration
-
-**Manual MySQL User Setup:**
 ```sql
--- Connect to MySQL as root and create DMS user
-CREATE USER 'dms_remote'@'172.20.10.2' IDENTIFIED BY 'secure_password';
-GRANT REPLICATION SLAVE ON *.* TO 'dms_remote'@'172.20.10.2';
-GRANT SELECT ON ecommerce.* TO 'dms_remote'@'172.20.10.2';
+-- Create DMS user
+CREATE USER 'dms_remote'@'%' IDENTIFIED BY 'SaiesaShanmukha@123';
+GRANT REPLICATION SLAVE ON *.* TO 'dms_remote'@'%';
+GRANT SELECT ON ecommerce.* TO 'dms_remote'@'%';
 FLUSH PRIVILEGES;
-```
-
-See `docs/deployment/MYSQL_DMS_USER_SETUP.md` for detailed setup instructions.
-
-Located in `terraform/terraform.dev.tfvars`:
-
-```hcl
-dms_replication_tasks = [
-  {
-    task_id = "compliance-guardian-replication"
-    migration_type = "full-load-and-cdc"
-    target_bucket = "compliance-guardian"
-    table_mappings = jsonencode({
-      rules = [{
-        rule-type = "selection"
-        rule-id = "1"
-        rule-name = "compliance-tables"
-        object-locator = {
-          schema-name = "ecommerce"
-          table-name = "compliance_%"
-        }
-        rule-action = "include"
-      }]
-    })
-  },
-  # ... 4 more tasks
-]
 ```
 
 ---
 
-## Post-Deployment
+## Operations
 
-### Verify Deployment
-
-```powershell
-# Check DMS instance
-terraform output dms_replication_instance_id
-
-# Check API Gateway
-terraform output api_gateway_url
-
-# Check frontend URL
-terraform output frontend_url
-
-# Check pipeline
-aws codepipeline get-pipeline-state \
-  --name futureim-ecommerce-ai-platform-pipeline-dev
-```
-
-### Test Pipeline Auto-Trigger
+### Daily Operations
 
 ```powershell
-# Make a change
+# Check Terraform state
+cd terraform
+terraform show
+
+# Check DMS replication
+cd database
+.\verify-dms-replication.ps1
+
+# Deploy code changes
 git add .
-git commit -m "Test pipeline"
+git commit -m "Changes"
 git push origin master
-
-# Pipeline should start within 1-2 minutes
-# Check: AWS Console → CodePipeline
+# Pipeline auto-triggers
 ```
 
-### Monitor DMS Replication
+### Maintenance
 
 ```powershell
-# Check task status
-aws dms describe-replication-tasks \
-  --query 'ReplicationTasks[].{ID:ReplicationTaskIdentifier,Status:Status}'
+# Update infrastructure
+cd terraform
+terraform plan -var-file="terraform.dev.tfvars"
+terraform apply -var-file="terraform.dev.tfvars"
 
-# View CloudWatch logs
-# AWS Console → CloudWatch → Log groups → /aws/dms/futureim-ecommerce-ai-platform-dev
+# Restart DMS replication
+aws dms stop-replication-task --replication-task-arn <arn>
+aws dms start-replication-task --replication-task-arn <arn> --start-replication-task-type start-replication
+
+# Destroy environment (use with caution!)
+terraform destroy -var-file="terraform.dev.tfvars"
 ```
 
 ---
 
 ## Troubleshooting
 
-### Terraform State Lock
+### DMS Cannot Connect to MySQL
 
-**Error**: `Error acquiring the state lock`
-
-**Solution**:
 ```powershell
-terraform force-unlock <LOCK_ID>
+# 1. Check MySQL bind address
+cd database
+.\check-mysql-bind-address.ps1
+
+# 2. Verify MySQL is listening
+netstat -ano | findstr :3306
+
+# 3. Test connection
+Test-NetConnection -ComputerName 172.20.10.2 -Port 3306
+
+# 4. Check MySQL user
+mysql -h 172.20.10.2 -u dms_remote -p
 ```
-
-### DMS VPC Role Error
-
-**Error**: `The IAM Role arn:aws:iam::450133579764:role/dms-vpc-role is not configured properly`
-
-**Solution**:
-```powershell
-.\create-dms-vpc-role.ps1
-```
-
-### GitHub Connection Pending
-
-**Error**: Pipeline fails at Source stage
-
-**Solution**: Activate connection in AWS Console (see Step 4 above)
-
-### DMS Replication Not Starting
-
-**Error**: Tasks created but not running
-
-**Solution**: Start tasks manually (see Step 4 above)
 
 ### Pipeline Not Auto-Triggering
 
-**Check**:
-1. GitHub connection status = AVAILABLE
-2. Pipeline type = V2
-3. DetectChanges = true
-
-**Verify**:
 ```powershell
-aws codepipeline get-pipeline \
-  --name futureim-ecommerce-ai-platform-pipeline-dev \
-  --query 'metadata.pipelineType'
+# 1. Check GitHub connection
+aws codestar-connections get-connection --connection-arn <arn>
+
+# 2. Manually trigger
+aws codepipeline start-pipeline-execution `
+  --name futureim-ecommerce-ai-platform-pipeline-dev
+```
+
+### Lambda Timeout
+
+```powershell
+# Increase timeout
+aws lambda update-function-configuration `
+  --function-name <name> `
+  --timeout 300
+
+# Increase memory
+aws lambda update-function-configuration `
+  --function-name <name> `
+  --memory-size 3008
 ```
 
 ---
 
-## Resource Naming Convention
+## Project Structure
 
-All resources follow: `{project_name}-{resource_type}-{environment}`
+```
+futureim-ecommerce-ai-platform/
+├── ai-systems/                    # 5 AI Lambda functions
+│   ├── compliance-guardian/       # Fraud detection & compliance
+│   ├── demand-insights-engine/    # Customer insights & forecasting
+│   ├── global-market-pulse/       # Market trends & opportunities
+│   ├── market-intelligence-hub/   # Time series forecasting
+│   └── retail-copilot/            # AI assistant
+├── analytics-service/             # Analytics API service
+├── auth-service/                  # Authentication service (Java)
+├── frontend/                      # React dashboard
+├── data-processing/               # Data pipeline (Docker)
+├── database/                      # MySQL schema & scripts
+├── terraform/                     # Infrastructure as Code
+│   ├── create-backend-resources.ps1  # Prerequisite: Create S3 + DynamoDB
+│   ├── create-dms-vpc-role.ps1       # Prerequisite: Create DMS IAM role
+│   ├── create-mysql-secret.ps1       # Prerequisite: Create MySQL secret
+│   └── modules/                   # Reusable modules
+└── README.md                     # This file
+```
 
-Examples:
-- `futureim-ecommerce-ai-platform-pipeline-dev`
-- `futureim-ecommerce-ai-platform-auth-dev`
-- `futureim-ecommerce-ai-platform-frontend-dev`
+---
+
+## Key Scripts
+
+### Prerequisite Scripts (Run Once)
+
+```powershell
+# Create Terraform backend resources
+terraform\create-backend-resources.ps1 -Region us-east-2
+
+# Create DMS VPC role
+terraform\create-dms-vpc-role.ps1
+
+# Create MySQL password secret
+terraform\create-mysql-secret.ps1 -MySQLPassword "password" -Environment dev
+```
+
+### Database Scripts
+
+```powershell
+# Check MySQL configuration
+database\check-mysql-bind-address.ps1
+
+# Setup database schema
+database\setup-database.ps1
+
+# Verify DMS replication
+database\verify-dms-replication.ps1
+```
+
+### Build Scripts
+
+```powershell
+# Build AI systems
+ai-systems\<system-name>\build.ps1
+
+# Build analytics service
+analytics-service\build.ps1
+
+# Build auth service
+auth-service\build.ps1
+
+# Build data processing
+data-processing\build-and-push.ps1
+```
+
+---
+
+## Monitoring
+
+### CloudWatch Metrics
+
+- Lambda invocations, errors, duration
+- DMS replication lag, throughput
+- API Gateway requests, errors, latency
+- S3 object count, storage size
+
+### CloudWatch Logs
+
+```powershell
+# Lambda logs
+aws logs tail /aws/lambda/<function-name> --follow
+
+# DMS logs
+aws logs tail /aws/dms/futureim-ecommerce-ai-platform-dev --follow
+
+# Search for errors
+aws logs filter-log-events `
+  --log-group-name /aws/lambda/<function-name> `
+  --filter-pattern "ERROR"
+```
 
 ---
 
 ## Security
 
-### Encryption
-- **At Rest**: KMS encryption for S3, DMS, Secrets Manager, CloudWatch
-- **In Transit**: HTTPS/TLS for all API calls
+### Security Features
 
-### Access Control
-- IAM roles with least privilege
-- Private subnets for sensitive resources
-- Security groups with minimal ports
-- VPC endpoints for AWS services
+- ✅ KMS encryption at rest
+- ✅ TLS 1.2+ encryption in transit
+- ✅ Secrets Manager for credentials
+- ✅ IAM roles with least privilege
+- ✅ VPC isolation for sensitive resources
+- ✅ Security groups with minimal ports
+- ✅ CloudTrail logging enabled
+- ✅ VPC Flow Logs enabled
 
-### Secrets Management
-- GitHub token: Secrets Manager
-- MySQL password: Secrets Manager
-- No secrets in code or version control
+### Security Checklist
+
+- [ ] All S3 buckets encrypted
+- [ ] No hardcoded credentials
+- [ ] API Gateway authentication enabled
+- [ ] CloudTrail enabled
+- [ ] VPC Flow Logs enabled
+- [ ] Security groups follow least privilege
+- [ ] Regular security audits
 
 ---
 
 ## Cost Optimization
 
-### Current Resources
-- DMS: dms.t3.medium (~$0.20/hour)
-- Lambda: Pay per invocation
-- S3: Pay per GB stored
-- API Gateway: Pay per request
-- CodePipeline: $1/month per pipeline
+### Current Monthly Costs (Estimated)
 
-### Recommendations
-- Stop DMS instance when not replicating
-- Use S3 lifecycle policies for old data
-- Monitor Lambda concurrency limits
-- Review CloudWatch log retention
+- DMS: ~$144/month (dms.t3.medium)
+- Lambda: ~$50/month (pay per invocation)
+- S3: ~$100/month (pay per GB)
+- API Gateway: ~$30/month (pay per request)
+- CodePipeline: $1/month
+- **Total: ~$325/month**
 
----
+### Cost Reduction Tips
 
-## Future Enhancements
-
-1. CloudFront distribution for frontend
-2. WAF for API Gateway protection
-3. Cognito for user authentication
-4. RDS for application database
-5. ElastiCache for caching
-6. Step Functions for orchestration
-7. EventBridge for event-driven architecture
-8. SageMaker for ML model deployment
-
----
-
-## Quick Reference
-
-### 🚀 **Most Common Commands**
-
-```powershell
-# Deploy dev environment
-.\cloudformation\deploy-stack.ps1 -Environment dev -GitHubToken "your_token"
-
-# Check status
-.\cloudformation\stack-status.ps1 -Environment dev
-
-# Delete environment (save costs)
-.\cloudformation\delete-stack.ps1 -Environment dev
-
-# Update MySQL IP
-.\update-mysql-ip.ps1 -NewMySQLIP "172.20.10.2" -Environment dev
-```
-
-### 📋 **File Structure**
-
-```
-├── cloudformation/                 # CloudFormation stack management
-│   ├── deploy-stack.ps1           # Deploy complete environment
-│   ├── delete-stack.ps1           # Delete complete environment
-│   ├── stack-status.ps1           # Check stack status
-│   └── ecommerce-ai-platform-stack.yaml  # CloudFormation template
-├── terraform/                     # Terraform infrastructure
-│   ├── main.tf                    # Main configuration
-│   ├── variables.tf               # Variable definitions
-│   └── modules/                   # Reusable modules
-├── docs/deployment/               # Deployment guides
-│   ├── MYSQL_DMS_USER_SETUP.md   # MySQL security setup
-│   └── PIPELINE_AUTO_TRIGGER_SETUP.md  # CI/CD configuration
-├── update-mysql-ip.ps1           # MySQL IP update script
-└── README.md                     # This file
-```
-
-### 🎯 **Decision Matrix: CloudFormation vs Terraform**
-
-| Need | CloudFormation | Direct Terraform |
-|------|----------------|------------------|
-| Easy cleanup | ✅ Perfect | ❌ Manual cleanup |
-| Dev/test environments | ✅ Ideal | ⚠️ Complex |
-| Production stability | ✅ Good | ✅ Excellent |
-| Fine-grained control | ⚠️ Limited | ✅ Full control |
-| Learning curve | ✅ Simple | ⚠️ Moderate |
-| Resource tracking | ✅ Automatic | ⚠️ Manual |
-
-**Recommendation**: Use CloudFormation for development and testing, consider direct Terraform for production.
+1. Stop DMS when not replicating
+2. Use S3 lifecycle policies for old data
+3. Optimize Lambda memory allocation
+4. Clean up old CloudWatch logs
+5. Use reserved capacity for predictable workloads
 
 ---
 
 ## Support
 
-For issues or questions:
-1. Check [Troubleshooting](#troubleshooting) section
-2. Review AWS CloudWatch Logs
-3. Check Terraform error messages
-4. Review AWS Console for resource status
+### Documentation
+
+- **Complete Operations Guide:** `docs/RUNBOOK.md`
+- **Module READMEs:** Each module has detailed documentation
+- **AWS Documentation:** https://docs.aws.amazon.com/
+
+### Contact
+
+- **Technical Support:** sales@futureim.in
+- **AWS Support:** AWS Support Center
 
 ---
 
@@ -923,6 +793,17 @@ Proprietary - FutureIM
 
 ---
 
-**Last Updated**: January 2026  
-**Version**: 1.0  
-**Status**: Production Ready
+## Version History
+
+- **1.0** (February 2026) - Initial production release
+  - 5 AI systems deployed
+  - Complete CI/CD pipeline
+  - Real-time data replication
+  - React frontend
+  - Comprehensive documentation
+
+---
+
+**Last Updated:** February 1, 2026  
+**Status:** Production Ready  
+**Maintained By:** FutureIM Engineering Team

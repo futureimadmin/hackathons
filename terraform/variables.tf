@@ -72,7 +72,7 @@ variable "dms_multi_az" {
 variable "mysql_server_name" {
   description = "MySQL server hostname or IP"
   type        = string
-  default     = "172.20.10.2"
+  default     = "106.192.45.56"  # Public IP for direct connection (no VPN) - CORRECTED
 }
 
 variable "mysql_port" {
@@ -115,4 +115,35 @@ variable "dms_replication_tasks" {
     migration_type    = string
   }))
   default = []
+}
+
+# VPN Configuration Variables
+variable "enable_vpn" {
+  description = "Enable VPN Gateway for on-premises connectivity to MySQL"
+  type        = bool
+  default     = false
+}
+
+variable "customer_gateway_ip" {
+  description = "Public IP address of your on-premises VPN device/router"
+  type        = string
+  default     = ""
+}
+
+variable "customer_gateway_bgp_asn" {
+  description = "BGP ASN for customer gateway (use 65000 for non-BGP)"
+  type        = number
+  default     = 65000
+}
+
+variable "onprem_cidr_block" {
+  description = "CIDR block of your on-premises network where MySQL resides (e.g., 172.20.0.0/16)"
+  type        = string
+  default     = "172.20.0.0/16"
+}
+
+variable "use_route_propagation" {
+  description = "Use VPN route propagation (true) or static routes (false)"
+  type        = bool
+  default     = true
 }

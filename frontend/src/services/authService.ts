@@ -75,12 +75,20 @@ class AuthService {
     const token = this.getToken();
     if (!token) return false;
 
-    // Check if token is expired
+    // Check if token is valid and not expired
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      const exp = payload.exp * 1000; // Convert to milliseconds
-      return Date.now() < exp;
+      
+      // If token has expiration, check it
+      if (payload.exp) {
+        const exp = payload.exp * 1000; // Convert to milliseconds
+        return Date.now() < exp;
+      }
+      
+      // If no expiration (non-expiring token), just check if token exists and is valid JSON
+      return true;
     } catch {
+      // Invalid token format
       return false;
     }
   }

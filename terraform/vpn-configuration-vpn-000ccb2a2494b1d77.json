@@ -1,0 +1,69 @@
+{
+    "VpnConnections":  [
+                           {
+                               "CustomerGatewayConfiguration":  "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n\u003cvpn_connection id=\"vpn-000ccb2a2494b1d77\"\u003e\n  \u003ccustomer_gateway_id\u003ecgw-0cde6010da21d5df0\u003c/customer_gateway_id\u003e\n  \u003cvpn_gateway_id\u003evgw-054a1a9fa318250d5\u003c/vpn_gateway_id\u003e\n  \u003cvpn_connection_type\u003eipsec.1\u003c/vpn_connection_type\u003e\n  \u003cvpn_connection_attributes\u003eNoBGPVPNConnection\u003c/vpn_connection_attributes\u003e\n  \u003cipsec_tunnel\u003e\n    \u003ccustomer_gateway\u003e\n      \u003ctunnel_outside_address\u003e\n        \u003cip_address\u003e106.192.43.15\u003c/ip_address\u003e\n      \u003c/tunnel_outside_address\u003e\n      \u003ctunnel_inside_address\u003e\n        \u003cip_address\u003e169.254.192.146\u003c/ip_address\u003e\n        \u003cnetwork_mask\u003e255.255.255.252\u003c/network_mask\u003e\n        \u003cnetwork_cidr\u003e30\u003c/network_cidr\u003e\n      \u003c/tunnel_inside_address\u003e\n    \u003c/customer_gateway\u003e\n    \u003cvpn_gateway\u003e\n      \u003ctunnel_outside_address\u003e\n        \u003cip_address\u003e16.58.177.12\u003c/ip_address\u003e\n      \u003c/tunnel_outside_address\u003e\n      \u003ctunnel_inside_address\u003e\n        \u003cip_address\u003e169.254.192.145\u003c/ip_address\u003e\n        \u003cnetwork_mask\u003e255.255.255.252\u003c/network_mask\u003e\n        \u003cnetwork_cidr\u003e30\u003c/network_cidr\u003e\n      \u003c/tunnel_inside_address\u003e\n    \u003c/vpn_gateway\u003e\n    \u003cike\u003e\n      \u003cauthentication_protocol\u003esha1\u003c/authentication_protocol\u003e\n      \u003cencryption_protocol\u003eaes-128-cbc\u003c/encryption_protocol\u003e\n      \u003clifetime\u003e28800\u003c/lifetime\u003e\n      \u003cperfect_forward_secrecy\u003egroup2\u003c/perfect_forward_secrecy\u003e\n      \u003cmode\u003emain\u003c/mode\u003e\n      \u003cpre_shared_key\u003eo_VBamQSKK.ZLQ7CUcyp.JvYKPb0y1yc\u003c/pre_shared_key\u003e\n    \u003c/ike\u003e\n    \u003cipsec\u003e\n      \u003cprotocol\u003eesp\u003c/protocol\u003e\n      \u003cauthentication_protocol\u003ehmac-sha1-96\u003c/authentication_protocol\u003e\n      \u003cencryption_protocol\u003eaes-128-cbc\u003c/encryption_protocol\u003e\n      \u003clifetime\u003e3600\u003c/lifetime\u003e\n      \u003cperfect_forward_secrecy\u003egroup2\u003c/perfect_forward_secrecy\u003e\n      \u003cmode\u003etunnel\u003c/mode\u003e\n      \u003cclear_df_bit\u003etrue\u003c/clear_df_bit\u003e\n      \u003cfragmentation_before_encryption\u003etrue\u003c/fragmentation_before_encryption\u003e\n      \u003ctcp_mss_adjustment\u003e1379\u003c/tcp_mss_adjustment\u003e\n      \u003cdead_peer_detection\u003e\n        \u003cinterval\u003e10\u003c/interval\u003e\n        \u003cretries\u003e3\u003c/retries\u003e\n      \u003c/dead_peer_detection\u003e\n    \u003c/ipsec\u003e\n  \u003c/ipsec_tunnel\u003e\n  \u003cipsec_tunnel\u003e\n    \u003ccustomer_gateway\u003e\n      \u003ctunnel_outside_address\u003e\n        \u003cip_address\u003e106.192.43.15\u003c/ip_address\u003e\n      \u003c/tunnel_outside_address\u003e\n      \u003ctunnel_inside_address\u003e\n        \u003cip_address\u003e169.254.87.66\u003c/ip_address\u003e\n        \u003cnetwork_mask\u003e255.255.255.252\u003c/network_mask\u003e\n        \u003cnetwork_cidr\u003e30\u003c/network_cidr\u003e\n      \u003c/tunnel_inside_address\u003e\n    \u003c/customer_gateway\u003e\n    \u003cvpn_gateway\u003e\n      \u003ctunnel_outside_address\u003e\n        \u003cip_address\u003e18.189.120.155\u003c/ip_address\u003e\n      \u003c/tunnel_outside_address\u003e\n      \u003ctunnel_inside_address\u003e\n        \u003cip_address\u003e169.254.87.65\u003c/ip_address\u003e\n        \u003cnetwork_mask\u003e255.255.255.252\u003c/network_mask\u003e\n        \u003cnetwork_cidr\u003e30\u003c/network_cidr\u003e\n      \u003c/tunnel_inside_address\u003e\n    \u003c/vpn_gateway\u003e\n    \u003cike\u003e\n      \u003cauthentication_protocol\u003esha1\u003c/authentication_protocol\u003e\n      \u003cencryption_protocol\u003eaes-128-cbc\u003c/encryption_protocol\u003e\n      \u003clifetime\u003e28800\u003c/lifetime\u003e\n      \u003cperfect_forward_secrecy\u003egroup2\u003c/perfect_forward_secrecy\u003e\n      \u003cmode\u003emain\u003c/mode\u003e\n      \u003cpre_shared_key\u003emqdWGMXd0S92dwupoWDt3UjrD7uE8eBp\u003c/pre_shared_key\u003e\n    \u003c/ike\u003e\n    \u003cipsec\u003e\n      \u003cprotocol\u003eesp\u003c/protocol\u003e\n      \u003cauthentication_protocol\u003ehmac-sha1-96\u003c/authentication_protocol\u003e\n      \u003cencryption_protocol\u003eaes-128-cbc\u003c/encryption_protocol\u003e\n      \u003clifetime\u003e3600\u003c/lifetime\u003e\n      \u003cperfect_forward_secrecy\u003egroup2\u003c/perfect_forward_secrecy\u003e\n      \u003cmode\u003etunnel\u003c/mode\u003e\n      \u003cclear_df_bit\u003etrue\u003c/clear_df_bit\u003e\n      \u003cfragmentation_before_encryption\u003etrue\u003c/fragmentation_before_encryption\u003e\n      \u003ctcp_mss_adjustment\u003e1379\u003c/tcp_mss_adjustment\u003e\n      \u003cdead_peer_detection\u003e\n        \u003cinterval\u003e10\u003c/interval\u003e\n        \u003cretries\u003e3\u003c/retries\u003e\n      \u003c/dead_peer_detection\u003e\n    \u003c/ipsec\u003e\n  \u003c/ipsec_tunnel\u003e\n\u003c/vpn_connection\u003e\n",
+                               "CustomerGatewayId":  "cgw-0cde6010da21d5df0",
+                               "Category":  "VPN",
+                               "State":  "available",
+                               "Type":  "ipsec.1",
+                               "VpnConnectionId":  "vpn-000ccb2a2494b1d77",
+                               "VpnGatewayId":  "vgw-054a1a9fa318250d5",
+                               "Options":  {
+                                               "EnableAcceleration":  false,
+                                               "StaticRoutesOnly":  true,
+                                               "TunnelOptions":  [
+                                                                     {
+                                                                         "OutsideIpAddress":  "16.58.177.12",
+                                                                         "TunnelInsideCidr":  "169.254.192.144/30",
+                                                                         "PreSharedKey":  "o_VBamQSKK.ZLQ7CUcyp.JvYKPb0y1yc"
+                                                                     },
+                                                                     {
+                                                                         "OutsideIpAddress":  "18.189.120.155",
+                                                                         "TunnelInsideCidr":  "169.254.87.64/30",
+                                                                         "PreSharedKey":  "mqdWGMXd0S92dwupoWDt3UjrD7uE8eBp"
+                                                                     }
+                                                                 ]
+                                           },
+                               "Routes":  [
+                                              {
+                                                  "DestinationCidrBlock":  "172.20.0.0/16",
+                                                  "State":  "available"
+                                              }
+                                          ],
+                               "Tags":  [
+                                            {
+                                                "Key":  "Project",
+                                                "Value":  "eCommerce-AI-Platform"
+                                            },
+                                            {
+                                                "Key":  "Environment",
+                                                "Value":  "dev"
+                                            },
+                                            {
+                                                "Key":  "ManagedBy",
+                                                "Value":  "Terraform"
+                                            },
+                                            {
+                                                "Key":  "Name",
+                                                "Value":  "futureim-ecommerce-ai-platform-dev-vpn-connection"
+                                            }
+                                        ],
+                               "VgwTelemetry":  [
+                                                    {
+                                                        "AcceptedRouteCount":  1,
+                                                        "LastStatusChange":  "2026-01-30T18:13:15+00:00",
+                                                        "OutsideIpAddress":  "16.58.177.12",
+                                                        "Status":  "DOWN",
+                                                        "StatusMessage":  ""
+                                                    },
+                                                    {
+                                                        "AcceptedRouteCount":  1,
+                                                        "LastStatusChange":  "2026-01-30T18:12:39+00:00",
+                                                        "OutsideIpAddress":  "18.189.120.155",
+                                                        "Status":  "DOWN",
+                                                        "StatusMessage":  ""
+                                                    }
+                                                ]
+                           }
+                       ]
+}

@@ -54,3 +54,41 @@ output "api_gateway_security_group_id" {
   description = "API Gateway security group ID"
   value       = aws_security_group.api_gateway.id
 }
+
+# VPN Outputs
+output "vpn_gateway_id" {
+  description = "VPN Gateway ID"
+  value       = var.enable_vpn ? aws_vpn_gateway.main[0].id : null
+}
+
+output "vpn_connection_id" {
+  description = "VPN Connection ID"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_vpn_connection.main[0].id : null
+}
+
+output "customer_gateway_id" {
+  description = "Customer Gateway ID"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_customer_gateway.main[0].id : null
+}
+
+output "vpn_connection_tunnel1_address" {
+  description = "VPN Connection Tunnel 1 Address"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_vpn_connection.main[0].tunnel1_address : null
+}
+
+output "vpn_connection_tunnel2_address" {
+  description = "VPN Connection Tunnel 2 Address"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_vpn_connection.main[0].tunnel2_address : null
+}
+
+output "vpn_connection_tunnel1_preshared_key" {
+  description = "VPN Connection Tunnel 1 Pre-Shared Key"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_vpn_connection.main[0].tunnel1_preshared_key : null
+  sensitive   = true
+}
+
+output "vpn_connection_tunnel2_preshared_key" {
+  description = "VPN Connection Tunnel 2 Pre-Shared Key"
+  value       = var.enable_vpn && var.customer_gateway_ip != "" ? aws_vpn_connection.main[0].tunnel2_preshared_key : null
+  sensitive   = true
+}

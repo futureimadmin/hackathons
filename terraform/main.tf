@@ -56,6 +56,16 @@ module "vpc" {
   vpc_cidr            = var.vpc_cidr
   availability_zones  = data.aws_availability_zones.available.names
   kms_key_id          = module.kms.kms_key_arn
+  
+  # VPN Configuration
+  enable_vpn              = var.enable_vpn
+  customer_gateway_ip     = var.customer_gateway_ip
+  customer_gateway_bgp_asn = var.customer_gateway_bgp_asn
+  onprem_cidr_block       = var.onprem_cidr_block
+  use_route_propagation   = var.use_route_propagation
+  
+  # MySQL Configuration for DMS Security Group
+  mysql_server_ip         = var.mysql_server_name
 }
 
 # IAM Module
@@ -222,7 +232,7 @@ module "dms" {
   project_name                = var.project_name
   environment                 = var.environment
   vpc_id                      = module.vpc.vpc_id
-  subnet_ids                  = module.vpc.private_subnet_ids
+  subnet_ids                  = module.vpc.public_subnet_ids  # Changed to public subnets for direct connection
   security_group_ids          = [module.vpc.dms_security_group_id]
   kms_key_arn                 = module.kms.kms_key_arn
   replication_instance_class  = var.dms_replication_instance_class

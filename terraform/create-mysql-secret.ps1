@@ -1,65 +1,51 @@
-# Create MySQL Password Secret for DMS
-# This script creates an AWS Secrets Manager secret for the MySQL password
+# Create MySQL Password Secret
+# Creates AWS Secrets Manager secret for MySQL password
 
 param(
+    [Parameter(Mandatory=$false)]
+    [string]$Region = "us-east-2",
+    
     [Parameter(Mandatory=$false)]
     [string]$Environment = "dev",
     
     [Parameter(Mandatory=$false)]
-    [string]$Password = "SaiesaShanmukha@123",
+    [string]$ProjectName = "futureim-ecommerce-ai-platform",
     
-    [Parameter(Mandatory=$false)]
-    [string]$Region = "us-east-2"
+    [Parameter(Mandatory=$true)]
+    [string]$MySQLPassword
 )
 
-$SecretName = "futureim-ecommerce-ai-platform-mysql-password-$Environment"
+$ErrorActionPreference = "Stop"
 
-Write-Host "Creating MySQL password secret..." -ForegroundColor Cyan
-Write-Host "Secret Name: $SecretName" -ForegroundColor Gray
-Write-Host "Region: $Region" -ForegroundColor Gray
+Write-Host "Creating MySQL Password Secret..." -ForegroundColor Green
+Write-Host "Region: $Region" -ForegroundColor Cyan
+Write-Host "Environment: $Environment" -ForegroundColor Cyan
 
-# Create the secret
-$result = aws secretsmanager create-secret `
-    --name $SecretName `
-    --description "MySQL password for DMS replication ($Environment)" `
-    --secret-string $Password `
-    --region $Region `
-    2>&1
+$SecretName = "$ProjectName-mysql-password-$Environment"
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "✓ Secret created successfully!" -ForegroundColor Green
+# Create secret
+Write-Host "`nCreating secret: $SecretName" -ForegroundColor Yellow
+try {
+    $Result = aws secretsmanager create-secret `
+        --name $SecretName `
+        --description "MySQL password for DMS replication ($Environment)" `
+        --secret-string $MySQLPassword `
+        --region $Region | ConvertFrom-Json
     
-    # Get the secret ARN
-    $secretInfo = aws secretsmanager describe-secret `
-        --secret-id $SecretName `
-        --region $Region `
-        --query 'ARN' `
-        --output text
+    Write-Host "Secret created successfully" -ForegroundColor Green
+    Write-Host "`n=== Secret Details ===" -ForegroundColor Green
+    Write-Host "Secret Name: $($Result.Name)" -ForegroundColor Cyan
+    Write-Host "Secret ARN: $($Result.ARN)" -ForegroundColor Cyan
+    Write-Host "`nIMPORTANT: Copy the ARN above!" -ForegroundColor Yellow
+    Write-Host "`nNext Steps:" -ForegroundColor Yellow
+    Write-Host "1. Update terraform/terraform.$Environment.tfvars" -ForegroundColor White
+    Write-Host "2. Set: mysql_password_secret_arn = `"$($Result.ARN)`"" -ForegroundColor White
     
-    Write-Host "`nSecret ARN:" -ForegroundColor Cyan
-    Write-Host $secretInfo -ForegroundColor White
-    
-    Write-Host "`nAdd this to your terraform.dev.tfvars:" -ForegroundColor Yellow
-    Write-Host "mysql_password_secret_arn = `"$secretInfo`"" -ForegroundColor White
-    
-} elseif ($result -like "*ResourceExistsException*") {
-    Write-Host "✓ Secret already exists!" -ForegroundColor Yellow
-    
-    # Get the existing secret ARN
-    $secretInfo = aws secretsmanager describe-secret `
-        --secret-id $SecretName `
-        --region $Region `
-        --query 'ARN' `
-        --output text
-    
-    Write-Host "`nSecret ARN:" -ForegroundColor Cyan
-    Write-Host $secretInfo -ForegroundColor White
-    
-    Write-Host "`nAdd this to your terraform.dev.tfvars:" -ForegroundColor Yellow
-    Write-Host "mysql_password_secret_arn = `"$secretInfo`"" -ForegroundColor White
-    
-} else {
-    Write-Host "✗ Failed to create secret" -ForegroundColor Red
-    Write-Host $result -ForegroundColor Red
+    # Return ARN for scripting
+    return $Result.ARN
+} catch {
+    Write-Host "Error creating secret: $_" -ForegroundColor Red
+    Write-Host "`nIf secret already exists, retrieve ARN with:" -ForegroundColor Yellow
+    Write-Host "aws secretsmanager describe-secret --secret-id $SecretName --region $Region" -ForegroundColor White
     exit 1
 }

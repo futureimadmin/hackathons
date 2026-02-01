@@ -16,8 +16,9 @@ public class ResponseBuilder {
     
     private static final Map<String, String> CORS_HEADERS = new HashMap<>() {{
         put("Access-Control-Allow-Origin", "*");
-        put("Access-Control-Allow-Headers", "Content-Type,Authorization");
-        put("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+        put("Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent");
+        put("Access-Control-Allow-Methods", "DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT");
+        put("Access-Control-Allow-Credentials", "false");
         put("Content-Type", "application/json");
     }};
     

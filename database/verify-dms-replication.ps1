@@ -3,7 +3,7 @@
 # Requirements: 6.6, 6.7
 
 param(
-    [string]$Region = "us-east-1",
+    [string]$Region = "us-east-2",
     [string]$ReplicationTaskArn = "",
     [switch]$Help
 )
