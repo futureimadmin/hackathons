@@ -1,25 +1,10 @@
 import { useLocation } from 'react-router-dom';
-import { Container, Typography, Grid } from '@mui/material';
+import { Container, Typography, Grid, Alert, CircularProgress, Box } from '@mui/material';
+import { useEffect, useState } from 'react';
 import Navigation from '../../components/Navigation';
 import Chart from '../../components/Chart';
 import DataTable, { Column } from '../../components/DataTable';
-
-// Sample data for demonstration
-const trendData = [
-  { month: 'Jan', sales: 4000, revenue: 2400 },
-  { month: 'Feb', sales: 3000, revenue: 1398 },
-  { month: 'Mar', sales: 2000, revenue: 9800 },
-  { month: 'Apr', sales: 2780, revenue: 3908 },
-  { month: 'May', sales: 1890, revenue: 4800 },
-  { month: 'Jun', sales: 2390, revenue: 3800 },
-];
-
-const forecastData = [
-  { month: 'Jul', actual: 2400, forecast: 2500, lower: 2200, upper: 2800 },
-  { month: 'Aug', actual: 2210, forecast: 2300, lower: 2000, upper: 2600 },
-  { month: 'Sep', actual: 0, forecast: 2600, lower: 2300, upper: 2900 },
-  { month: 'Oct', actual: 0, forecast: 2800, lower: 2500, upper: 3100 },
-];
+import { marketIntelligenceService, TrendData, ForecastData, PricingData } from '../../services/marketIntelligenceService';
 
 const pricingColumns: Column[] = [
   { id: 'product', label: 'Product' },
@@ -29,16 +14,42 @@ const pricingColumns: Column[] = [
   { id: 'marketAvg', label: 'Market Avg', align: 'right', format: (val) => `$${val}` },
 ];
 
-const pricingData = [
-  { product: 'Product A', ourPrice: 29.99, competitor1: 32.99, competitor2: 28.99, marketAvg: 30.66 },
-  { product: 'Product B', ourPrice: 49.99, competitor1: 45.99, competitor2: 52.99, marketAvg: 49.66 },
-  { product: 'Product C', ourPrice: 19.99, competitor1: 22.99, competitor2: 19.99, marketAvg: 20.99 },
-  { product: 'Product D', ourPrice: 99.99, competitor1: 95.99, competitor2: 105.99, marketAvg: 100.66 },
-];
-
 const MarketIntelligenceHub = () => {
   const location = useLocation();
   const { userName } = location.state || {};
+
+  const [trendData, setTrendData] = useState<TrendData[]>([]);
+  const [forecastData, setForecastData] = useState<ForecastData[]>([]);
+  const [pricingData, setPricingData] = useState<PricingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load all data in parallel
+      const [trendsResponse, forecastResponse, pricingResponse] = await Promise.all([
+        marketIntelligenceService.getTrends(),
+        marketIntelligenceService.generateForecast({ horizon: 30, model: 'auto' }),
+        marketIntelligenceService.getCompetitivePricing(),
+      ]);
+
+      setTrendData(trendsResponse.trends);
+      setForecastData(forecastResponse.forecast);
+      setPricingData(pricingResponse.pricing);
+    } catch (err: any) {
+      console.error('Error loading dashboard data:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -49,39 +60,51 @@ const MarketIntelligenceHub = () => {
           Market Intelligence Hub Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary" paragraph>
-          Market intelligence, forecasting, and analytics
+          Market intelligence, forecasting, and analytics powered by real-time data
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Chart
-              title="Market Trends"
-              data={trendData}
-              type="line"
-              xKey="month"
-              yKeys={['sales', 'revenue']}
-            />
-          </Grid>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-          <Grid item xs={12} md={6}>
-            <Chart
-              title="Sales Forecasting (ARIMA Model)"
-              data={forecastData}
-              type="line"
-              xKey="month"
-              yKeys={['actual', 'forecast', 'lower', 'upper']}
-              colors={['#1976d2', '#dc004e', '#4caf50', '#ff9800']}
-            />
-          </Grid>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Chart
+                title="Market Trends"
+                data={trendData}
+                type="line"
+                xKey="month"
+                yKeys={['sales', 'revenue']}
+              />
+            </Grid>
 
-          <Grid item xs={12}>
-            <DataTable
-              title="Competitive Pricing Analysis"
-              columns={pricingColumns}
-              rows={pricingData}
-            />
+            <Grid item xs={12} md={6}>
+              <Chart
+                title="Sales Forecasting (AI Model)"
+                data={forecastData}
+                type="line"
+                xKey="month"
+                yKeys={['actual', 'forecast', 'lower', 'upper']}
+                colors={['#1976d2', '#dc004e', '#4caf50', '#ff9800']}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <DataTable
+                title="Competitive Pricing Analysis"
+                columns={pricingColumns}
+                rows={pricingData}
+              />
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Container>
     </>
   );

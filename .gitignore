@@ -10,3 +10,5 @@ terraform/.terraform.lock.hcl
 terraform/modules/api-gateway/lambda/node_modules
 terraform/modules/api-gateway/lambda/authorizer.zip
 terraform/tests/__pycache__
+lambda-functions/curated-to-prod/package
+lambda-functions/raw-to-curated/package

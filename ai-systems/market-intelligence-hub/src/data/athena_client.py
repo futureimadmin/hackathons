@@ -22,7 +22,8 @@ class AthenaClient:
         self,
         database: str = 'market_intelligence_hub',
         s3_staging_dir: str = None,
-        region_name: str = 'us-east-1'
+        region_name: str = 'us-east-1',
+        workgroup: str = 'primary'
     ):
         """
         Initialize Athena client.
@@ -31,18 +32,19 @@ class AthenaClient:
             database: Athena database name
             s3_staging_dir: S3 location for query results
             region_name: AWS region
+            workgroup: Athena workgroup name
         """
         self.database = database
         self.region_name = region_name
+        self.workgroup = workgroup
         
         if s3_staging_dir is None:
-            # Get from environment or use default
+            # Get from environment - use ATHENA_OUTPUT_LOCATION which is set by Lambda
             import os
-            account_id = boto3.client('sts').get_caller_identity()['Account']
-            self.s3_staging_dir = os.getenv(
-                'ATHENA_STAGING_DIR',
-                f's3://athena-query-results-{account_id}/'
-            )
+            self.s3_staging_dir = os.getenv('ATHENA_OUTPUT_LOCATION')
+            if not self.s3_staging_dir:
+                # Fallback to hardcoded value
+                self.s3_staging_dir = 's3://futureim-ecommerce-ai-platform-dev-athena-results-450133579764/'
         else:
             self.s3_staging_dir = s3_staging_dir
         
@@ -66,7 +68,8 @@ class AthenaClient:
             conn = connect(
                 s3_staging_dir=self.s3_staging_dir,
                 region_name=self.region_name,
-                cursor_class=PandasCursor
+                cursor_class=PandasCursor,
+                work_group=self.workgroup
             )
             
             df = pd.read_sql(query, conn)

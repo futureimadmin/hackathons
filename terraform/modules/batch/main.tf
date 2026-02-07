@@ -31,6 +31,13 @@ resource "aws_batch_compute_environment" "data_processing" {
     )
   }
 
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      compute_resources[0].desired_vcpus
+    ]
+  }
+
   depends_on = [aws_iam_role_policy_attachment.batch_service]
 }
 
@@ -193,7 +200,7 @@ resource "aws_batch_job_definition" "curated_to_prod" {
 resource "aws_cloudwatch_log_group" "batch_jobs" {
   name              = "/aws/batch/${var.project_name}"
   retention_in_days = var.log_retention_days
-  kms_key_id        = var.kms_key_id
+  kms_key_id        = var.kms_key_arn
 
   tags = var.tags
 }
@@ -202,6 +209,7 @@ resource "aws_cloudwatch_log_group" "batch_jobs" {
 resource "aws_ecr_repository" "data_processor" {
   name                 = "${var.project_name}-data-processor"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -210,6 +218,10 @@ resource "aws_ecr_repository" "data_processor" {
   encryption_configuration {
     encryption_type = "KMS"
     kms_key         = var.kms_key_id
+  }
+
+  lifecycle {
+    prevent_destroy = false
   }
 
   tags = var.tags

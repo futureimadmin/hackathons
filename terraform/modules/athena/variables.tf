@@ -20,7 +20,7 @@ variable "query_results_retention_days" {
 variable "bytes_scanned_cutoff" {
   description = "Maximum bytes scanned per query (default: 10 GB)"
   type        = number
-  default     = 10737418240
+  default     = 10737418240  # 10 GB in bytes
 }
 
 variable "high_cost_threshold_bytes" {

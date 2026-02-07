@@ -1,7 +1,7 @@
 # AWS Athena Module - Workgroup and Query Configuration
 # Creates Athena workgroup for analytics queries
 
-# S3 bucket for Athena query results
+# S3 bucket for Athena query results (single bucket for all systems)
 resource "aws_s3_bucket" "query_results" {
   bucket = var.query_results_bucket_name
 
@@ -9,10 +9,13 @@ resource "aws_s3_bucket" "query_results" {
     var.tags,
     {
       Name    = var.query_results_bucket_name
-      Purpose = "Athena query results"
+      Purpose = "Athena query results for all AI systems"
     }
   )
 }
+
+# Data source for current AWS account
+data "aws_caller_identity" "current" {}
 
 # Enable versioning for query results bucket
 resource "aws_s3_bucket_versioning" "query_results" {
@@ -42,6 +45,37 @@ resource "aws_s3_bucket_public_access_block" "query_results" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+# Bucket policy to allow Athena service and Lambda role access
+resource "aws_s3_bucket_policy" "query_results" {
+  bucket = aws_s3_bucket.query_results.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowAthenaServiceAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "athena.amazonaws.com"
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = [
+          aws_s3_bucket.query_results.arn,
+          "${aws_s3_bucket.query_results.arn}/*"
+        ]
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.query_results]
 }
 
 # Lifecycle policy for query results
@@ -84,8 +118,8 @@ resource "aws_athena_workgroup" "analytics" {
     # Enable CloudWatch metrics
     publish_cloudwatch_metrics_enabled = true
 
-    # Data usage control - limit bytes scanned per query (10 GB)
-    bytes_scanned_cutoff_per_query = var.bytes_scanned_cutoff
+    # Data usage control - commented out due to Terraform type issues
+    # bytes_scanned_cutoff_per_query = var.bytes_scanned_cutoff
 
     # Engine version
     engine_version {

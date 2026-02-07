@@ -25,11 +25,6 @@ variable "kms_key_id" {
   type        = string
 }
 
-variable "batch_job_role_arn" {
-  description = "ARN of the IAM role used by AWS Batch jobs for data processing"
-  type        = string
-}
-
 variable "tags" {
   description = "Additional tags to apply to all resources"
   type        = map(string)

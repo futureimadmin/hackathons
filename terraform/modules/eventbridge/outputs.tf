@@ -1,14 +1,12 @@
 # Outputs for EventBridge Module
 
-output "raw_bucket_event_rules" {
-  description = "Map of raw bucket event rule ARNs"
-  value = {
-    for k, v in aws_cloudwatch_event_rule.raw_bucket_events : k => v.arn
-  }
+output "raw_bucket_event_rule_arn" {
+  description = "ARN of the shared raw bucket event rule"
+  value       = aws_cloudwatch_event_rule.raw_bucket_events.arn
 }
 
 output "curated_bucket_event_rules" {
-  description = "Map of curated bucket event rule ARNs"
+  description = "Map of curated bucket event rule ARNs (one per system)"
   value = {
     for k, v in aws_cloudwatch_event_rule.curated_bucket_events : k => v.arn
   }

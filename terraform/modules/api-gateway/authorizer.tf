@@ -83,7 +83,10 @@ resource "aws_iam_role_policy" "authorizer" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = "arn:aws:secretsmanager:*:*:secret:${var.jwt_secret_name}-*"
+        Resource = [
+          "arn:aws:secretsmanager:*:*:secret:${var.jwt_secret_name}",
+          "arn:aws:secretsmanager:*:*:secret:${var.jwt_secret_name}-*"
+        ]
       }
     ]
   })

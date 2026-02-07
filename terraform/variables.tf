@@ -18,6 +18,12 @@ variable "project_name" {
   default     = "futureim-ecommerce-ai-platform"
 }
 
+variable "aws_account_id" {
+  description = "AWS Account ID"
+  type        = string
+  default     = "450133579764"
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string

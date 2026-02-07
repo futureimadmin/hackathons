@@ -101,6 +101,16 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ]
+        Resource = var.kms_key_arn
       }
     ]
   })

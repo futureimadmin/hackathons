@@ -24,7 +24,8 @@ class AthenaClient:
         database: str,
         output_location: str,
         region: str = 'us-east-1',
-        max_execution_time: int = 300
+        max_execution_time: int = 300,
+        workgroup: str = 'primary'
     ):
         """
         Initialize Athena client.
@@ -34,10 +35,12 @@ class AthenaClient:
             output_location: S3 location for query results
             region: AWS region
             max_execution_time: Maximum query execution time in seconds
+            workgroup: Athena workgroup name
         """
         self.database = database
         self.output_location = output_location
         self.max_execution_time = max_execution_time
+        self.workgroup = workgroup
         self.client = boto3.client('athena', region_name=region)
         self.s3_client = boto3.client('s3', region_name=region)
     
@@ -78,7 +81,8 @@ class AthenaClient:
             response = self.client.start_query_execution(
                 QueryString=query,
                 QueryExecutionContext={'Database': self.database},
-                ResultConfiguration={'OutputLocation': self.output_location}
+                ResultConfiguration={'OutputLocation': self.output_location},
+                WorkGroup=self.workgroup
             )
             
             execution_id = response['QueryExecutionId']

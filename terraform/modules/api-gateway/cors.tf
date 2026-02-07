@@ -11,7 +11,7 @@ resource "aws_api_gateway_gateway_response" "cors_4xx" {
   }
 
   response_parameters = {
-    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'*'"
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = var.cors_allowed_origin != "*" ? "'${var.cors_allowed_origin}'" : "'*'"
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
   }
@@ -26,7 +26,7 @@ resource "aws_api_gateway_gateway_response" "cors_5xx" {
   }
 
   response_parameters = {
-    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'*'"
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = var.cors_allowed_origin != "*" ? "'${var.cors_allowed_origin}'" : "'*'"
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
   }
@@ -77,7 +77,7 @@ resource "aws_api_gateway_integration_response" "root_options" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
     "method.response.header.Access-Control-Allow-Methods" = "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origin != "*" ? "'${var.cors_allowed_origin}'" : "'*'"
   }
 
   depends_on = [aws_api_gateway_integration.root_options]
@@ -192,7 +192,7 @@ resource "aws_api_gateway_integration_response" "options" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
     "method.response.header.Access-Control-Allow-Methods" = "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origin != "*" ? "'${var.cors_allowed_origin}'" : "'*'"
   }
 
   depends_on = [aws_api_gateway_integration.options]

@@ -73,22 +73,38 @@ class AuthService {
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    if (!token) return false;
+    if (!token) {
+      console.log('No token found');
+      return false;
+    }
 
     // Check if token is valid and not expired
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      
-      // If token has expiration, check it
-      if (payload.exp) {
-        const exp = payload.exp * 1000; // Convert to milliseconds
-        return Date.now() < exp;
+      // Check if it's a JWT (has 3 parts separated by dots)
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        console.log('Token payload:', payload);
+        
+        // If token has expiration, check it
+        if (payload.exp) {
+          const exp = payload.exp * 1000; // Convert to milliseconds
+          const isValid = Date.now() < exp;
+          console.log('Token expiration check:', { exp: new Date(exp), now: new Date(), isValid });
+          return isValid;
+        }
+        
+        // If no expiration (non-expiring token), just check if token exists and is valid JSON
+        console.log('Token has no expiration, treating as valid');
+        return true;
+      } else {
+        // Not a JWT format, just check if token exists
+        console.log('Token is not JWT format, treating as valid');
+        return true;
       }
-      
-      // If no expiration (non-expiring token), just check if token exists and is valid JSON
-      return true;
-    } catch {
+    } catch (error) {
       // Invalid token format
+      console.error('Token validation error:', error);
       return false;
     }
   }

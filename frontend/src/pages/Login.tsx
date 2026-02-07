@@ -25,9 +25,14 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await authService.login(email, password);
+      const response = await authService.login(email, password);
+      console.log('Login successful:', response);
+      console.log('Token stored:', localStorage.getItem('token'));
+      console.log('User stored:', localStorage.getItem('user'));
+      console.log('Is authenticated:', authService.isAuthenticated());
       navigate('/home');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);

@@ -159,6 +159,16 @@ resource "aws_iam_role_policy" "market_intelligence_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ]
+        Resource = var.kms_key_arn
       }
     ]
   })

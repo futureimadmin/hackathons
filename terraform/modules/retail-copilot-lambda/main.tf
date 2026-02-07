@@ -134,6 +134,16 @@ resource "aws_iam_role_policy" "retail_copilot_lambda_policy" {
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.conversation_table}",
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.conversation_table}/index/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ]
+        Resource = var.kms_key_arn
       }
     ]
   })

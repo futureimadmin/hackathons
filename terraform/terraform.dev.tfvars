@@ -19,3 +19,42 @@ mysql_port                = 3306
 mysql_database            = "ecommerce"
 mysql_username            = "dms_remote"
 mysql_password_secret_arn = "arn:aws:secretsmanager:us-east-2:450133579764:secret:futureim-ecommerce-ai-platform-mysql-password-dev-EynmXx"
+
+# DMS Replication Tasks
+dms_replication_tasks = [
+  {
+    task_id         = "market-intelligence-hub-replication"
+    source_database = "ecommerce"
+    target_bucket   = "market-intelligence-hub"
+    migration_type  = "full-load-and-cdc"
+    table_mappings  = "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"ecommerce\",\"table-name\":\"%\"},\"rule-action\":\"include\"}]}"
+  },
+  {
+    task_id         = "demand-insights-engine-replication"
+    source_database = "ecommerce"
+    target_bucket   = "demand-insights-engine"
+    migration_type  = "full-load-and-cdc"
+    table_mappings  = "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"ecommerce\",\"table-name\":\"%\"},\"rule-action\":\"include\"}]}"
+  },
+  {
+    task_id         = "compliance-guardian-replication"
+    source_database = "ecommerce"
+    target_bucket   = "compliance-guardian"
+    migration_type  = "full-load-and-cdc"
+    table_mappings  = "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"ecommerce\",\"table-name\":\"%\"},\"rule-action\":\"include\"}]}"
+  },
+  {
+    task_id         = "retail-copilot-replication"
+    source_database = "ecommerce"
+    target_bucket   = "retail-copilot"
+    migration_type  = "full-load-and-cdc"
+    table_mappings  = "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"ecommerce\",\"table-name\":\"%\"},\"rule-action\":\"include\"}]}"
+  },
+  {
+    task_id         = "global-market-pulse-replication"
+    source_database = "ecommerce"
+    target_bucket   = "global-market-pulse"
+    migration_type  = "full-load-and-cdc"
+    table_mappings  = "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"ecommerce\",\"table-name\":\"%\"},\"rule-action\":\"include\"}]}"
+  }
+]

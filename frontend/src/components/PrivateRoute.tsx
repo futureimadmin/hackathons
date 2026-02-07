@@ -7,8 +7,15 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const isAuthenticated = authService.isAuthenticated();
+  
+  console.log('PrivateRoute check:', {
+    isAuthenticated,
+    token: authService.getToken(),
+    user: authService.getCurrentUser()
+  });
 
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 

@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 # Initialize components
 athena_client = AthenaClient(
     database=os.environ.get('ATHENA_DATABASE', 'global_market_db'),
-    output_location=os.environ.get('ATHENA_OUTPUT_LOCATION', 's3://ecommerce-athena-results/'),
-    region=os.environ.get('AWS_REGION', 'us-east-1')
+    output_location=os.environ.get('ATHENA_OUTPUT_LOCATION'),
+    region=os.environ.get('AWS_REGION', 'us-east-1'),
+    workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
 )
 
 # Global instances (reused across invocations)

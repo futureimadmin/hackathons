@@ -106,6 +106,16 @@ resource "aws_iam_role_policy" "compliance_guardian_lambda_policy" {
         Resource = [
           "${var.athena_output_location}*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ]
+        Resource = var.kms_key_arn
       }
     ]
   })

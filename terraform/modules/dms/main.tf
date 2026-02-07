@@ -99,6 +99,8 @@ resource "aws_dms_endpoint" "target" {
     cdc_path                = "cdc"
     timestamp_column_name   = "dms_timestamp"
     parquet_timestamp_in_millisecond = true
+    date_partition_enabled  = true
+    date_partition_sequence = "YYYYMMDD"
     encryption_mode         = "SSE_KMS"
     server_side_encryption_kms_key_id = var.kms_key_arn
     service_access_role_arn = aws_iam_role.dms_s3_role.arn

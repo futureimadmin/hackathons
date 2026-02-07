@@ -21,12 +21,24 @@ class AthenaClient:
     def __init__(
         self,
         database: str = 'compliance_db',
-        output_location: str = 's3://ecommerce-athena-results/',
-        region: str = 'us-east-1'
+        output_location: str = None,
+        region: str = 'us-east-1',
+        workgroup: str = 'primary'
     ):
         self.database = database
-        self.output_location = output_location
         self.region = region
+        self.workgroup = workgroup
+        
+        # Set output location from environment or use default
+        if output_location is None:
+            import os
+            self.output_location = os.getenv('ATHENA_OUTPUT_LOCATION')
+            if not self.output_location:
+                # Fallback to hardcoded value
+                self.output_location = 's3://futureim-ecommerce-ai-platform-dev-athena-results-450133579764/'
+        else:
+            self.output_location = output_location
+            
         self.client = boto3.client('athena', region_name=region)
     
     def execute_query(self, query: str, max_wait_time: int = 300) -> pd.DataFrame:
@@ -45,7 +57,8 @@ class AthenaClient:
             response = self.client.start_query_execution(
                 QueryString=query,
                 QueryExecutionContext={'Database': self.database},
-                ResultConfiguration={'OutputLocation': self.output_location}
+                ResultConfiguration={'OutputLocation': self.output_location},
+                WorkGroup=self.workgroup
             )
             
             query_execution_id = response['QueryExecutionId']
