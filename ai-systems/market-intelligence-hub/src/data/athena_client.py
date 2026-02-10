@@ -20,10 +20,10 @@ class AthenaClient:
     
     def __init__(
         self,
-        database: str = 'market_intelligence_hub',
+        database: str = None,
         s3_staging_dir: str = None,
-        region_name: str = 'us-east-1',
-        workgroup: str = 'primary'
+        region_name: str = None,
+        workgroup: str = None
     ):
         """
         Initialize Athena client.
@@ -34,13 +34,15 @@ class AthenaClient:
             region_name: AWS region
             workgroup: Athena workgroup name
         """
-        self.database = database
-        self.region_name = region_name
-        self.workgroup = workgroup
+        import os
+        
+        # Get from environment variables with fallbacks
+        self.database = database or os.getenv('ATHENA_DATABASE', 'market_intelligence_hub')
+        self.region_name = region_name or os.getenv('AWS_REGION', 'us-east-2')
+        self.workgroup = 'primary'  # Always use primary workgroup for MVP
         
         if s3_staging_dir is None:
             # Get from environment - use ATHENA_OUTPUT_LOCATION which is set by Lambda
-            import os
             self.s3_staging_dir = os.getenv('ATHENA_OUTPUT_LOCATION')
             if not self.s3_staging_dir:
                 # Fallback to hardcoded value
@@ -48,7 +50,7 @@ class AthenaClient:
         else:
             self.s3_staging_dir = s3_staging_dir
         
-        self.athena_client = boto3.client('athena', region_name=region_name)
+        self.athena_client = boto3.client('athena', region_name=self.region_name)
         
     def execute_query(self, query: str, timeout: int = 300) -> pd.DataFrame:
         """
@@ -103,21 +105,21 @@ class AthenaClient:
         query = f"""
         SELECT 
             DATE(o.order_date) as date,
-            SUM(oi.total) as sales,
+            SUM(oi.total_amount) as sales,
             COUNT(DISTINCT o.order_id) as order_count,
             SUM(oi.quantity) as quantity_sold
-        FROM {self.database}.ecommerce_orders_prod o
-        JOIN {self.database}.ecommerce_order_items_prod oi 
+        FROM {self.database}.orders o
+        JOIN {self.database}.order_items oi 
             ON o.order_id = oi.order_id
         WHERE o.order_date >= DATE '{start_date}'
             AND o.order_date <= DATE '{end_date}'
-            AND o.order_status = 'completed'
+            AND o.status = 'completed'
         """
         
         if product_id:
             query += f" AND oi.product_id = '{product_id}'"
         if category_id:
-            query += f" AND oi.product_id IN (SELECT product_id FROM {self.database}.ecommerce_products_prod WHERE category_id = '{category_id}')"
+            query += f" AND oi.product_id IN (SELECT product_id FROM {self.database}.products WHERE category_id = '{category_id}')"
         
         query += """
         GROUP BY DATE(o.order_date)
@@ -152,20 +154,20 @@ class AthenaClient:
         SELECT 
             c.name as category_name,
             c.category_id,
-            SUM(oi.total) as total_sales,
+            SUM(oi.total_amount) as total_sales,
             COUNT(DISTINCT o.order_id) as order_count,
             SUM(oi.quantity) as quantity_sold,
             AVG(oi.unit_price) as avg_price
-        FROM {self.database}.ecommerce_orders_prod o
-        JOIN {self.database}.ecommerce_order_items_prod oi 
+        FROM {self.database}.orders o
+        JOIN {self.database}.order_items oi 
             ON o.order_id = oi.order_id
-        JOIN {self.database}.ecommerce_products_prod p 
+        JOIN {self.database}.products p 
             ON oi.product_id = p.product_id
-        JOIN {self.database}.ecommerce_categories_prod c 
+        JOIN {self.database}.categories c 
             ON p.category_id = c.category_id
         WHERE o.order_date >= DATE '{start_date}'
             AND o.order_date <= DATE '{end_date}'
-            AND o.order_status = 'completed'
+            AND o.status = 'completed'
         GROUP BY c.name, c.category_id
         ORDER BY total_sales DESC
         """
@@ -194,7 +196,7 @@ class AthenaClient:
             metric_name,
             metric_value,
             growth_rate
-        FROM {self.database}.market_intelligence_trends_prod
+        FROM {self.database}.market_trends
         WHERE trend_date >= DATE '{start_date}'
             AND trend_date <= DATE '{end_date}'
         ORDER BY trend_date
@@ -229,7 +231,7 @@ class AthenaClient:
             price_difference,
             price_difference_pct,
             last_updated
-        FROM {self.database}.market_intelligence_competitive_pricing_prod
+        FROM {self.database}.competitive_pricing
         """
         
         if product_id:
@@ -263,7 +265,7 @@ class AthenaClient:
             model_used,
             confidence_lower,
             confidence_upper
-        FROM {self.database}.market_intelligence_forecasts_prod
+        FROM {self.database}.market_forecasts
         WHERE metric_name = '{metric}'
         ORDER BY forecast_date DESC
         LIMIT {limit}

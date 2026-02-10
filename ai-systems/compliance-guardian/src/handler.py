@@ -20,12 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize components
-athena_client = AthenaClient(
-    database=os.environ.get('ATHENA_DATABASE', 'compliance_db'),
-    output_location=os.environ.get('ATHENA_OUTPUT_LOCATION'),
-    region=os.environ.get('AWS_REGION', 'us-east-1'),
-    workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-)
+athena_client = AthenaClient()
 
 # Global model instances (reused across invocations)
 fraud_detector = None

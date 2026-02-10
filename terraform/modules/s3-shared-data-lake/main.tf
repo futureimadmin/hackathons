@@ -65,11 +65,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "raw" {
   }
 }
 
-# Enable EventBridge notifications for raw bucket
-resource "aws_s3_bucket_notification" "raw" {
-  bucket      = aws_s3_bucket.raw.id
-  eventbridge = true
-}
+# NOTE: S3 bucket notifications are configured in the data_pipeline_lambdas module
+# to trigger Lambda functions directly. Do not configure notifications here to avoid conflicts.
 
 # Shared Curated Bucket - Contains validated and deduplicated data for ALL systems
 resource "aws_s3_bucket" "curated" {
@@ -129,11 +126,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "curated" {
   }
 }
 
-# Enable EventBridge notifications for curated bucket
-resource "aws_s3_bucket_notification" "curated" {
-  bucket      = aws_s3_bucket.curated.id
-  eventbridge = true
-}
+# NOTE: S3 bucket notifications are configured in the data_pipeline_lambdas module
+# to trigger Lambda functions directly. Do not configure notifications here to avoid conflicts.
 
 # Bucket policies for DMS access
 resource "aws_s3_bucket_policy" "raw" {

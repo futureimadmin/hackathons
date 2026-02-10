@@ -307,9 +307,9 @@ def smart_validate_data(df, table_name):
     
     # Table-specific smart validation
     if table_name == 'orders':
-        if 'total' in df.columns:
+        if 'total_amount' in df.columns:
             # Remove orders with negative or zero totals
-            df = df[df['total'] > 0]
+            df = df[df['total_amount'] > 0]
         
         if 'order_date' in df.columns:
             # Remove future dates

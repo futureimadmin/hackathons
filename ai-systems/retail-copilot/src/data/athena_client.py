@@ -21,11 +21,11 @@ class AthenaClient:
     
     def __init__(
         self,
-        database: str,
-        output_location: str,
-        region: str = 'us-east-1',
+        database: str = None,
+        output_location: str = None,
+        region: str = None,
         max_execution_time: int = 300,
-        workgroup: str = 'primary'
+        workgroup: str = None
     ):
         """
         Initialize Athena client.
@@ -37,10 +37,23 @@ class AthenaClient:
             max_execution_time: Maximum query execution time in seconds
             workgroup: Athena workgroup name
         """
-        self.database = database
-        self.output_location = output_location
+        import os
+        
+        # Get from environment variables with fallbacks
+        self.database = database or os.getenv('ATHENA_DATABASE', 'retail_copilot')
+        region = region or os.getenv('AWS_REGION', 'us-east-2')
+        self.workgroup = 'primary'  # Always use primary workgroup for MVP
+        
+        # Set output location from environment or use default
+        if output_location is None:
+            self.output_location = os.getenv('ATHENA_OUTPUT_LOCATION')
+            if not self.output_location:
+                # Fallback to hardcoded value
+                self.output_location = 's3://futureim-ecommerce-ai-platform-dev-athena-results-450133579764/'
+        else:
+            self.output_location = output_location
+        
         self.max_execution_time = max_execution_time
-        self.workgroup = workgroup
         self.client = boto3.client('athena', region_name=region)
         self.s3_client = boto3.client('s3', region_name=region)
     

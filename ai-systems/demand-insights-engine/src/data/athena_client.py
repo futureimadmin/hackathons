@@ -20,18 +20,20 @@ class AthenaClient:
     
     def __init__(
         self,
-        database: str = 'demand_insights_db',
+        database: str = None,
         output_location: str = None,
-        region: str = 'us-east-1',
-        workgroup: str = 'primary'
+        region: str = None,
+        workgroup: str = None
     ):
-        self.database = database
-        self.region = region
-        self.workgroup = workgroup
+        import os
+        
+        # Get from environment variables with fallbacks
+        self.database = database or os.getenv('ATHENA_DATABASE', 'demand_insights_db')
+        self.region = region or os.getenv('AWS_REGION', 'us-east-2')
+        self.workgroup = 'primary'  # Always use primary workgroup for MVP
         
         # Set output location from environment or use default
         if output_location is None:
-            import os
             self.output_location = os.getenv('ATHENA_OUTPUT_LOCATION')
             if not self.output_location:
                 # Fallback to hardcoded value
@@ -39,7 +41,7 @@ class AthenaClient:
         else:
             self.output_location = output_location
             
-        self.client = boto3.client('athena', region_name=region)
+        self.client = boto3.client('athena', region_name=self.region)
     
     def execute_query(self, query: str, max_wait_time: int = 300) -> pd.DataFrame:
         """

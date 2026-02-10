@@ -510,7 +510,6 @@ module "market_intelligence_lambda" {
   additional_env_vars = {
     MPLCONFIGDIR = "/tmp/matplotlib"
     PLOTLY_RENDERER = "json"
-    ATHENA_WORKGROUP = "${var.project_name}-${var.environment}"
   }
   
   tags = {
@@ -537,7 +536,6 @@ module "demand_insights_lambda" {
   additional_env_vars = {
     MPLCONFIGDIR = "/tmp/matplotlib"
     PLOTLY_RENDERER = "json"
-    ATHENA_WORKGROUP = "${var.project_name}-${var.environment}"
   }
   
   tags = {
@@ -564,7 +562,6 @@ module "compliance_guardian_lambda" {
   additional_env_vars = {
     MPLCONFIGDIR = "/tmp/matplotlib"
     PLOTLY_RENDERER = "json"
-    ATHENA_WORKGROUP = "${var.project_name}-${var.environment}"
   }
   
   tags = {
@@ -591,7 +588,6 @@ module "retail_copilot_lambda" {
   additional_env_vars = {
     MPLCONFIGDIR = "/tmp/matplotlib"
     PLOTLY_RENDERER = "json"
-    ATHENA_WORKGROUP = "${var.project_name}-${var.environment}"
   }
   
   tags = {
@@ -618,7 +614,6 @@ module "global_market_pulse_lambda" {
   additional_env_vars = {
     MPLCONFIGDIR = "/tmp/matplotlib"
     PLOTLY_RENDERER = "json"
-    ATHENA_WORKGROUP = "${var.project_name}-${var.environment}"
   }
   
   tags = {

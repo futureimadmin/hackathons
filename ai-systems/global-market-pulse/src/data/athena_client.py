@@ -18,7 +18,7 @@ class AthenaClient:
     Client for querying data from AWS Athena.
     """
     
-    def __init__(self, database: str, output_location: str, region: str = 'us-east-1', workgroup: str = 'primary'):
+    def __init__(self, database: str = None, output_location: str = None, region: str = None, workgroup: str = None):
         """
         Initialize Athena client.
         
@@ -28,12 +28,24 @@ class AthenaClient:
             region: AWS region
             workgroup: Athena workgroup name
         """
-        self.database = database
-        self.output_location = output_location
-        self.region = region
-        self.workgroup = workgroup
-        self.client = boto3.client('athena', region_name=region)
-        self.s3_client = boto3.client('s3', region_name=region)
+        import os
+        
+        # Get from environment variables with fallbacks
+        self.database = database or os.getenv('ATHENA_DATABASE', 'global_market_pulse')
+        self.region = region or os.getenv('AWS_REGION', 'us-east-2')
+        self.workgroup = 'primary'  # Always use primary workgroup for MVP
+        
+        # Set output location from environment or use default
+        if output_location is None:
+            self.output_location = os.getenv('ATHENA_OUTPUT_LOCATION')
+            if not self.output_location:
+                # Fallback to hardcoded value
+                self.output_location = 's3://futureim-ecommerce-ai-platform-dev-athena-results-450133579764/'
+        else:
+            self.output_location = output_location
+        
+        self.client = boto3.client('athena', region_name=self.region)
+        self.s3_client = boto3.client('s3', region_name=self.region)
     
     def execute_query(self, query: str, max_wait_time: int = 60) -> pd.DataFrame:
         """

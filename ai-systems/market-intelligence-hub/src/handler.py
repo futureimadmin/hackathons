@@ -100,9 +100,7 @@ def handle_forecast(event: Dict) -> Dict:
         logger.info(f"Generating {horizon}-day forecast using {model_type} model")
         
         # Initialize Athena client
-        athena = AthenaClient(
-            workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-        )
+        athena = AthenaClient()
         
         # Fetch historical data
         sales_data = athena.get_sales_data(
@@ -184,9 +182,7 @@ def handle_trends(event: Dict) -> Dict:
         logger.info(f"Fetching market trends from {start_date} to {end_date}")
         
         # Initialize Athena client
-        athena = AthenaClient(
-            workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-        )
+        athena = AthenaClient()
         
         # Fetch trends
         trends = athena.get_market_trends(start_date, end_date)
@@ -226,9 +222,7 @@ def handle_competitive_pricing(event: Dict) -> Dict:
         logger.info(f"Fetching competitive pricing for product: {product_id or 'all'}")
         
         # Initialize Athena client
-        athena = AthenaClient(
-            workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-        )
+        athena = AthenaClient()
         
         # Fetch competitive pricing
         pricing = athena.get_competitive_pricing(product_id)
@@ -280,9 +274,7 @@ def handle_compare_models(event: Dict) -> Dict:
         logger.info(f"Comparing models: {models_to_test}")
         
         # Initialize Athena client
-        athena = AthenaClient(
-            workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-        )
+        athena = AthenaClient()
         
         # Fetch historical data
         sales_data = athena.get_sales_data(

@@ -22,11 +22,6 @@ resource "aws_lambda_function" "ai_lambda" {
   }
 
   tags = var.tags
-
-  # Ignore changes to image_uri as it will be updated by CI/CD
-  lifecycle {
-    ignore_changes = [image_uri]
-  }
 }
 
 # CloudWatch Log Group

@@ -21,12 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize components
-athena_client = AthenaClient(
-    database=os.environ.get('ATHENA_DATABASE', 'global_market_db'),
-    output_location=os.environ.get('ATHENA_OUTPUT_LOCATION'),
-    region=os.environ.get('AWS_REGION', 'us-east-1'),
-    workgroup=os.environ.get('ATHENA_WORKGROUP', 'primary')
-)
+athena_client = AthenaClient()
 
 # Global instances (reused across invocations)
 trend_analyzer = TrendAnalyzer()
@@ -88,6 +83,16 @@ def handle_market_trends(params: Dict) -> Dict:
     Handle market trends request.
     
     GET /global-market/trends?region=USA&days=90
+    
+    Returns: {
+        trends: [{
+            region: string,
+            product_category: string,
+            trend_score: number,
+            growth_rate: number,
+            period: string
+        }]
+    }
     """
     try:
         # Get parameters
@@ -99,26 +104,66 @@ def handle_market_trends(params: Dict) -> Dict:
         trend_data = athena_client.get_market_trends(region=region, days=days)
         
         if trend_data.empty:
-            return create_response(404, {'error': 'No trend data found'})
+            logger.warning("No trend data found, returning empty trends")
+            return create_response(200, {'trends': []})
         
-        # Analyze trends
-        logger.info("Analyzing market trends...")
-        analysis = trend_analyzer.analyze_trends(
-            trend_data,
-            date_column='date',
-            value_column='total_sales',
-            region_column='region' if region is None else None
-        )
+        # Convert numeric columns
+        numeric_cols = ['order_count', 'total_sales', 'avg_order_value', 'unique_customers']
+        for col in numeric_cols:
+            if col in trend_data.columns:
+                trend_data[col] = pd.to_numeric(trend_data[col], errors='coerce')
         
-        return create_response(200, {
-            'analysis': analysis,
-            'data_points': len(trend_data),
-            'region': region,
-            'period_days': days
-        })
+        trend_data = trend_data.fillna(0)
+        
+        # Calculate trend scores and growth rates by region
+        trends = []
+        
+        if 'region' in trend_data.columns:
+            # Group by region
+            for region_name, group in trend_data.groupby('region'):
+                # Calculate growth rate
+                if len(group) > 1:
+                    first_sales = group['total_sales'].iloc[0]
+                    last_sales = group['total_sales'].iloc[-1]
+                    growth_rate = ((last_sales - first_sales) / first_sales * 100) if first_sales > 0 else 0
+                else:
+                    growth_rate = 0
+                
+                # Calculate trend score (0-100 based on sales volume and growth)
+                avg_sales = group['total_sales'].mean()
+                max_sales = trend_data['total_sales'].max()
+                trend_score = (avg_sales / max_sales * 50) + (min(growth_rate, 100) / 2) if max_sales > 0 else 50
+                
+                trends.append({
+                    'region': str(region_name),
+                    'product_category': 'All',  # Aggregate across all categories
+                    'trend_score': float(trend_score),
+                    'growth_rate': float(growth_rate),
+                    'period': f'{days} days'
+                })
+        else:
+            # Single region or no region grouping
+            if len(trend_data) > 1:
+                first_sales = trend_data['total_sales'].iloc[0]
+                last_sales = trend_data['total_sales'].iloc[-1]
+                growth_rate = ((last_sales - first_sales) / first_sales * 100) if first_sales > 0 else 0
+            else:
+                growth_rate = 0
+            
+            trends.append({
+                'region': region or 'All',
+                'product_category': 'All',
+                'trend_score': 75.0,  # Default score
+                'growth_rate': float(growth_rate),
+                'period': f'{days} days'
+            })
+        
+        logger.info(f"Returning {len(trends)} trend records")
+        
+        return create_response(200, {'trends': trends})
     
     except Exception as e:
-        logger.error(f"Error analyzing market trends: {str(e)}")
+        logger.error(f"Error analyzing market trends: {str(e)}", exc_info=True)
         return create_response(500, {'error': str(e)})
 
 
@@ -127,6 +172,16 @@ def handle_regional_prices(params: Dict) -> Dict:
     Handle regional prices request.
     
     GET /global-market/regional-prices?limit=1000
+    
+    Returns: {
+        prices: [{
+            region: string,
+            product_id: string,
+            product_name: string,
+            avg_price: number,
+            currency: string
+        }]
+    }
     """
     try:
         # Get parameters
@@ -137,15 +192,36 @@ def handle_regional_prices(params: Dict) -> Dict:
         price_data = athena_client.get_regional_prices(limit=limit)
         
         if price_data.empty:
-            return create_response(404, {'error': 'No pricing data found'})
+            logger.warning("No pricing data found, returning empty prices")
+            return create_response(200, {'prices': []})
+        
+        # Convert numeric columns
+        numeric_cols = ['price', 'order_count', 'total_quantity']
+        for col in numeric_cols:
+            if col in price_data.columns:
+                price_data[col] = pd.to_numeric(price_data[col], errors='coerce')
+        
+        price_data = price_data.fillna(0)
+        
+        # Transform to expected format
+        prices = []
+        for _, row in price_data.iterrows():
+            prices.append({
+                'region': str(row.get('region', 'Unknown')),
+                'product_id': str(row.get('product_id', '')),
+                'product_name': str(row.get('product_name', 'Unknown Product')),
+                'avg_price': float(row.get('price', 0)),
+                'currency': str(row.get('currency', 'USD'))
+            })
+        
+        logger.info(f"Returning {len(prices)} price records")
         
         return create_response(200, {
-            'prices': price_data.to_dict('records'),
-            'count': len(price_data)
+            'prices': prices[:limit]
         })
     
     except Exception as e:
-        logger.error(f"Error fetching regional prices: {str(e)}")
+        logger.error(f"Error fetching regional prices: {str(e)}", exc_info=True)
         return create_response(500, {'error': str(e)})
 
 
@@ -201,14 +277,18 @@ def handle_market_opportunities(body: Dict) -> Dict:
     
     POST /global-market/opportunities
     Body: {
-        "weights": {
-            "market_size": 0.25,
-            "growth_rate": 0.25,
-            "competition_level": 0.20,
-            "price_premium": 0.15,
-            "market_maturity": 0.15
-        },
+        "region": "optional",
+        "weights": {...},
         "top_n": 10
+    }
+    
+    Returns: {
+        opportunities: [{
+            region: string,
+            product_category: string,
+            opportunity_score: number,
+            recommendation: string
+        }]
     }
     """
     try:
@@ -221,7 +301,8 @@ def handle_market_opportunities(body: Dict) -> Dict:
         opp_data = athena_client.get_market_opportunity_data()
         
         if opp_data.empty:
-            return create_response(404, {'error': 'No opportunity data found'})
+            logger.warning("No opportunity data found, returning empty opportunities")
+            return create_response(200, {'opportunities': []})
         
         # Convert numeric columns
         numeric_cols = ['market_size', 'total_revenue', 'avg_order_value', 
@@ -245,34 +326,44 @@ def handle_market_opportunities(body: Dict) -> Dict:
         else:
             opp_data['growth_rate'] = 0
         
-        # Add synthetic metrics for scoring
-        opp_data['competition_level'] = 50  # Placeholder
-        opp_data['price_premium'] = opp_data['avg_price'] / opp_data['avg_price'].mean() * 100
-        opp_data['market_maturity'] = 50  # Placeholder
+        # Calculate opportunity scores
+        # Score based on: market size, revenue, growth rate, customer base
+        max_revenue = opp_data['total_revenue'].max() if opp_data['total_revenue'].max() > 0 else 1
+        max_customers = opp_data['unique_customers'].max() if opp_data['unique_customers'].max() > 0 else 1
         
-        # Score opportunities
-        logger.info("Scoring market opportunities...")
-        scored_data = opportunity_scorer.score_opportunities(
-            opp_data,
-            region_column='region',
-            weights=weights
-        )
+        opportunities = []
+        for _, row in opp_data.iterrows():
+            # Calculate score (0-100)
+            revenue_score = (row['total_revenue'] / max_revenue) * 40
+            customer_score = (row['unique_customers'] / max_customers) * 30
+            growth_score = min(abs(row['growth_rate']), 100) * 0.3
+            
+            opportunity_score = revenue_score + customer_score + growth_score
+            
+            # Generate recommendation
+            if opportunity_score >= 70:
+                recommendation = "High priority - Strong market potential"
+            elif opportunity_score >= 50:
+                recommendation = "Medium priority - Growing market"
+            else:
+                recommendation = "Low priority - Monitor for changes"
+            
+            opportunities.append({
+                'region': str(row['region']),
+                'product_category': 'All',  # Aggregate view
+                'opportunity_score': float(opportunity_score),
+                'recommendation': recommendation
+            })
         
-        # Get top opportunities
-        top_opportunities = opportunity_scorer.rank_opportunities(
-            scored_data,
-            region_column='region',
-            top_n=top_n
-        )
+        # Sort by score and limit
+        opportunities = sorted(opportunities, key=lambda x: x['opportunity_score'], reverse=True)[:top_n]
         
-        return create_response(200, {
-            'opportunities': top_opportunities,
-            'total_regions': len(scored_data),
-            'weights_used': weights if weights else opportunity_scorer.default_weights
-        })
+        logger.info(f"Returning {len(opportunities)} opportunity records")
+        
+        return create_response(200, {'opportunities': opportunities})
     
     except Exception as e:
-        logger.error(f"Error scoring opportunities: {str(e)}")
+        logger.error(f"Error scoring opportunities: {str(e)}", exc_info=True)
         return create_response(500, {'error': str(e)})
 
 

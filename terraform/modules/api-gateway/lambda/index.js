@@ -90,11 +90,16 @@ exports.handler = async (event) => {
 
     console.log('Token verified successfully for user:', decoded.userId);
 
-    // Generate allow policy with user context
+    // Generate allow policy with wildcard resource to allow all API methods
+    // Extract API Gateway ARN base and add wildcard
+    const arnParts = methodArn.split('/');
+    const apiGatewayArnBase = arnParts.slice(0, 2).join('/');
+    const wildcardResource = `${apiGatewayArnBase}/*`;
+
     const policy = generatePolicy(
       decoded.userId,
       'Allow',
-      methodArn,
+      wildcardResource,
       {
         userId: decoded.userId,
         email: decoded.email || '',
